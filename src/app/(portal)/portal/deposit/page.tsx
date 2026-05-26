@@ -23,18 +23,20 @@ export default async function DepositPage() {
 
   return (
     <div className="mx-auto max-w-2xl py-8">
-      <div className="mb-8">
+      <div className="anim-fade-up mb-8" style={{ animationDelay: '0ms' }}>
         <h1 className="font-display text-2xl font-bold text-text-primary">Deposit Funds</h1>
         <p className="mt-1 text-sm text-text-secondary">
           Choose your preferred payment method and amount.
         </p>
       </div>
-      <DepositForm
-        accountId={account?.id ?? ''}
-        accountNumber={account?.account_number ?? ''}
-        currency={account?.currency ?? 'USD'}
-        userId={user!.id}
-      />
+      <div className="anim-fade-up" style={{ animationDelay: '60ms' }}>
+        <DepositForm
+          accountId={account?.id ?? ''}
+          accountNumber={account?.account_number ?? ''}
+          currency={account?.currency ?? 'USD'}
+          userId={user!.id}
+        />
+      </div>
     </div>
   )
 }

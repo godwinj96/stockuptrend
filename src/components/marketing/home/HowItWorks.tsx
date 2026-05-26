@@ -4,8 +4,8 @@ import { useRef } from 'react'
 import Link from 'next/link'
 import { motion, useInView } from 'framer-motion'
 import { UserPlus, ShieldCheck, TrendingUp, ArrowRight } from 'lucide-react'
-import { slideInLeftVariants, fadeUpVariants } from '@/lib/constants/motion'
 import { ROUTES } from '@/lib/constants/routes'
+import { WordRevealHeading } from '@/components/shared/WordRevealHeading'
 
 const STEPS = [
   {
@@ -37,43 +37,66 @@ export function HowItWorks() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div ref={ref}>
           <motion.div
-            variants={slideInLeftVariants}
-            initial="hidden"
-            animate={isInView ? 'visible' : 'hidden'}
+            initial={{ opacity: 0, y: 16 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.5, ease: [0, 0, 0.2, 1] }}
             className="mb-14 text-center"
           >
             <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-accent-primary">
               How It Works
             </p>
-            <h2 className="font-display text-3xl font-bold text-text-primary sm:text-4xl">
-              Start Trading in 3 Steps
-            </h2>
+            <WordRevealHeading
+              text="Start Trading in 3 Steps"
+              className="font-display text-3xl font-bold text-text-primary sm:text-4xl"
+            />
           </motion.div>
 
           <div className="relative">
-            {/* Connecting line (desktop) */}
-            <div className="absolute left-0 right-0 top-1/4 hidden h-px bg-gradient-to-r from-transparent via-border-default to-transparent lg:block" />
+            {/* SVG connecting line (desktop only) */}
+            <svg
+              className="pointer-events-none absolute inset-0 hidden w-full lg:block"
+              style={{ height: '64px', top: '32px' }}
+              preserveAspectRatio="none"
+              viewBox="0 0 1000 1"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <motion.line
+                x1="180" y1="0.5" x2="820" y2="0.5"
+                stroke="var(--accent-primary)"
+                strokeWidth="1.5"
+                strokeDasharray="6 4"
+                strokeOpacity="0.4"
+                initial={{ pathLength: 0, opacity: 0 }}
+                animate={isInView ? { pathLength: 1, opacity: 1 } : {}}
+                transition={{ duration: 1.2, delay: 0.3, ease: 'easeInOut' }}
+              />
+            </svg>
 
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
               {STEPS.map((step, i) => (
                 <motion.div
                   key={step.number}
-                  custom={i}
-                  variants={fadeUpVariants}
-                  initial="hidden"
-                  animate={isInView ? 'visible' : 'hidden'}
+                  initial={{ opacity: 0, y: 32 }}
+                  animate={isInView ? { opacity: 1, y: 0 } : {}}
+                  transition={{ duration: 0.6, delay: 0.1 + i * 0.15, ease: [0.16, 1, 0.3, 1] }}
                   className="relative flex flex-col items-center text-center"
                 >
-                  {/* Step number bubble */}
-                  <div className="relative mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-border-subtle bg-bg-base shadow-card">
+                  {/* Step number bubble with scale-bounce entrance */}
+                  <motion.div
+                    initial={{ scale: 0.4, opacity: 0 }}
+                    animate={isInView ? { scale: 1, opacity: 1 } : {}}
+                    transition={{
+                      type: 'spring',
+                      stiffness: 400,
+                      damping: 18,
+                      delay: 0.25 + i * 0.15,
+                    }}
+                    className="relative z-10 mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-border-subtle bg-bg-base shadow-card"
+                  >
                     <span className="font-display text-2xl font-extrabold text-accent-primary">
                       {step.number}
                     </span>
-                    {/* Arrow connector (desktop) */}
-                    {i < STEPS.length - 1 && (
-                      <ArrowRight className="absolute -right-10 top-1/2 hidden -translate-y-1/2 h-5 w-5 text-border-default lg:block" />
-                    )}
-                  </div>
+                  </motion.div>
 
                   <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-accent-primary-muted">
                     <step.icon className="h-5 w-5 text-accent-primary" />
@@ -89,9 +112,9 @@ export function HowItWorks() {
           </div>
 
           <motion.div
-            variants={fadeUpVariants}
-            initial="hidden"
-            animate={isInView ? 'visible' : 'hidden'}
+            initial={{ opacity: 0, y: 12 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.5, delay: 0.7, ease: [0, 0, 0.2, 1] }}
             className="mt-12 text-center"
           >
             <Link

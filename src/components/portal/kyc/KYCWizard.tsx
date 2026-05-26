@@ -2,7 +2,9 @@
 
 import { useState } from 'react'
 import { CheckCircle2, Clock, XCircle, AlertCircle } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils/cn'
+import { AnimatedCheckmark } from '@/components/shared/AnimatedCheckmark'
 import { KYCStepPersonal } from './KYCStepPersonal'
 import { KYCStepDocuments } from './KYCStepDocuments'
 import { KYCStepSelfie } from './KYCStepSelfie'
@@ -48,27 +50,75 @@ const STATUS_CONFIG = {
   not_started: null,
 }
 
+const slideVariants = {
+  enter: (dir: number) => ({
+    x: dir > 0 ? 40 : -40,
+    opacity: 0,
+  }),
+  center: { x: 0, opacity: 1 },
+  exit: (dir: number) => ({
+    x: dir > 0 ? -40 : 40,
+    opacity: 0,
+  }),
+}
+
 export function KYCWizard({ kycStatus, userId, prefillName, prefillCountry }: KYCWizardProps) {
   const [currentStep, setCurrentStep] = useState(1)
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set())
+  const [direction, setDirection] = useState(1)
+  const [showCelebration, setShowCelebration] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
 
   const statusKey = kycStatus as keyof typeof STATUS_CONFIG
   const statusConfig = STATUS_CONFIG[statusKey]
 
-  if (statusConfig && kycStatus !== 'not_started' && kycStatus !== 'rejected') {
-    const StatusIcon = statusConfig.icon
+  if ((statusConfig && kycStatus !== 'not_started' && kycStatus !== 'rejected') || submitted) {
+    const config = submitted ? STATUS_CONFIG.under_review : statusConfig!
+    const StatusIcon = config.icon
     return (
-      <div className={cn('rounded-2xl border p-8 text-center', statusConfig.className)}>
-        <StatusIcon className="mx-auto mb-3 h-12 w-12" />
-        <h2 className="font-display text-xl font-bold">{statusConfig.title}</h2>
-        <p className="mt-2 text-sm opacity-80">{statusConfig.body}</p>
-      </div>
+      <AnimatePresence mode="wait">
+        {showCelebration ? (
+          <motion.div
+            key="celebration"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.3 }}
+            className="flex flex-col items-center justify-center py-16 text-center"
+          >
+            <AnimatedCheckmark
+              size={72}
+              onComplete={() => setTimeout(() => setShowCelebration(false), 600)}
+            />
+            <p className="mt-4 text-sm text-text-secondary">Submitting your documents…</p>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="status"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: [0, 0, 0.2, 1] }}
+            className={cn('rounded-2xl border p-8 text-center', config.className)}
+          >
+            <StatusIcon className="mx-auto mb-3 h-12 w-12" />
+            <h2 className="font-display text-xl font-bold">{config.title}</h2>
+            <p className="mt-2 text-sm opacity-80">{config.body}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
     )
   }
 
   function handleStepComplete(step: number) {
     setCompletedSteps((prev) => new Set([...prev, step]))
-    if (step < 3) setCurrentStep(step + 1)
+    if (step < 3) {
+      setDirection(1)
+      setCurrentStep(step + 1)
+    } else {
+      // Step 3 done — show celebration then status card
+      setShowCelebration(true)
+      setSubmitted(true)
+    }
   }
 
   return (
@@ -78,7 +128,13 @@ export function KYCWizard({ kycStatus, userId, prefillName, prefillCountry }: KY
         {STEPS.map((step, i) => (
           <div key={step.number} className="flex flex-1 items-center">
             <div className="flex flex-col items-center">
-              <div
+              <motion.div
+                animate={
+                  completedSteps.has(step.number)
+                    ? { scale: [1, 1.15, 1] }
+                    : {}
+                }
+                transition={{ duration: 0.3 }}
                 className={cn(
                   'flex h-9 w-9 items-center justify-center rounded-full border-2 text-sm font-semibold transition-colors',
                   completedSteps.has(step.number)
@@ -93,7 +149,7 @@ export function KYCWizard({ kycStatus, userId, prefillName, prefillCountry }: KY
                 ) : (
                   step.number
                 )}
-              </div>
+              </motion.div>
               <span
                 className={cn(
                   'mt-1 text-xs',
@@ -104,33 +160,48 @@ export function KYCWizard({ kycStatus, userId, prefillName, prefillCountry }: KY
               </span>
             </div>
             {i < STEPS.length - 1 && (
-              <div
-                className={cn(
-                  'mb-4 h-px flex-1',
-                  completedSteps.has(step.number) ? 'bg-accent-primary' : 'bg-border-subtle'
-                )}
+              <motion.div
+                animate={{
+                  backgroundColor: completedSteps.has(step.number)
+                    ? 'var(--accent-primary)'
+                    : 'var(--border-subtle)',
+                }}
+                transition={{ duration: 0.4 }}
+                className="mb-4 h-px flex-1"
               />
             )}
           </div>
         ))}
       </div>
 
-      {/* Step content */}
-      <div className="rounded-2xl border border-border-subtle bg-bg-surface p-6">
-        {currentStep === 1 && (
-          <KYCStepPersonal
-            userId={userId}
-            prefillName={prefillName}
-            prefillCountry={prefillCountry}
-            onComplete={() => handleStepComplete(1)}
-          />
-        )}
-        {currentStep === 2 && (
-          <KYCStepDocuments userId={userId} onComplete={() => handleStepComplete(2)} />
-        )}
-        {currentStep === 3 && (
-          <KYCStepSelfie userId={userId} onComplete={() => handleStepComplete(3)} />
-        )}
+      {/* Step content with slide transitions */}
+      <div className="overflow-hidden rounded-2xl border border-border-subtle bg-bg-surface p-6">
+        <AnimatePresence custom={direction} mode="wait">
+          <motion.div
+            key={currentStep}
+            custom={direction}
+            variants={slideVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
+          >
+            {currentStep === 1 && (
+              <KYCStepPersonal
+                userId={userId}
+                prefillName={prefillName}
+                prefillCountry={prefillCountry}
+                onComplete={() => handleStepComplete(1)}
+              />
+            )}
+            {currentStep === 2 && (
+              <KYCStepDocuments userId={userId} onComplete={() => handleStepComplete(2)} />
+            )}
+            {currentStep === 3 && (
+              <KYCStepSelfie userId={userId} onComplete={() => handleStepComplete(3)} />
+            )}
+          </motion.div>
+        </AnimatePresence>
       </div>
     </div>
   )

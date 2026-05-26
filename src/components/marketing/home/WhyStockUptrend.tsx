@@ -3,7 +3,7 @@
 import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
 import { Gauge, ShieldCheck, Globe2, BarChart3 } from 'lucide-react'
-import { slideInLeftVariants, scaleUpVariants } from '@/lib/constants/motion'
+import { WordRevealHeading } from '@/components/shared/WordRevealHeading'
 
 const WHY_ITEMS = [
   {
@@ -37,17 +37,18 @@ export function WhyStockUptrend() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div ref={ref}>
           <motion.div
-            variants={slideInLeftVariants}
-            initial="hidden"
-            animate={isInView ? 'visible' : 'hidden'}
+            initial={{ opacity: 0, y: 16 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.5, ease: [0, 0, 0.2, 1] }}
             className="mb-14 text-center"
           >
             <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-accent-primary">
               Why Us
             </p>
-            <h2 className="font-display text-3xl font-bold text-text-primary sm:text-4xl">
-              Built for Traders, Not Beginners
-            </h2>
+            <WordRevealHeading
+              text="Built for Traders, Not Beginners"
+              className="font-display text-3xl font-bold text-text-primary sm:text-4xl"
+            />
             <p className="mx-auto mt-3 max-w-lg text-text-secondary">
               Every feature, every decision — engineered to give you an edge in the market.
             </p>
@@ -57,10 +58,9 @@ export function WhyStockUptrend() {
             {WHY_ITEMS.map((item, i) => (
               <motion.div
                 key={item.title}
-                custom={i}
-                variants={scaleUpVariants}
-                initial="hidden"
-                animate={isInView ? 'visible' : 'hidden'}
+                initial={{ clipPath: 'inset(0 0 100% 0)', opacity: 0 }}
+                animate={isInView ? { clipPath: 'inset(0 0 0% 0)', opacity: 1 } : {}}
+                transition={{ duration: 0.6, delay: i * 0.06, ease: [0.16, 1, 0.3, 1] }}
                 className="rounded-xl border border-border-subtle bg-bg-base p-6"
               >
                 <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-accent-primary-muted">

@@ -4,6 +4,7 @@ import { useState, useRef } from 'react'
 import { Camera, FileCheck } from 'lucide-react'
 import { toast } from 'sonner'
 import { createBrowserClient } from '@/lib/supabase/client'
+import { cn } from '@/lib/utils/cn'
 
 interface Props {
   userId: string
@@ -15,6 +16,7 @@ export function KYCStepSelfie({ userId, onComplete }: Props) {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [uploadedPath, setUploadedPath] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
   async function handleFileSelect(file: File) {
@@ -43,18 +45,37 @@ export function KYCStepSelfie({ userId, onComplete }: Props) {
     }
 
     setUploadedFile(file)
+    setUploadedPath(path)
     toast.success('Selfie uploaded')
   }
 
   async function handleSubmit() {
-    if (!uploadedFile) return
+    if (!uploadedFile || !uploadedPath) return
     setSubmitting(true)
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const db = supabase as any
-    const { error } = await db.from('profiles').update({ kyc_status: 'under_review' }).eq('id', userId)
 
-    if (error) {
+    // Insert kyc_documents record for selfie (fixes missing row bug)
+    const { error: docError } = await db.from('kyc_documents').insert({
+      user_id: userId,
+      doc_type: 'selfie',
+      file_url: uploadedPath,
+      status: 'pending',
+    })
+
+    if (docError) {
+      toast.error('Submission failed. Please try again.')
+      setSubmitting(false)
+      return
+    }
+
+    const { error: profileError } = await db
+      .from('profiles')
+      .update({ kyc_status: 'under_review' })
+      .eq('id', userId)
+
+    if (profileError) {
       toast.error('Submission failed. Please try again.')
       setSubmitting(false)
       return
@@ -91,7 +112,13 @@ export function KYCStepSelfie({ userId, onComplete }: Props) {
         type="button"
         onClick={() => fileRef.current?.click()}
         disabled={uploading}
-        className="flex w-full items-center gap-4 rounded-xl border-2 border-dashed border-border-subtle p-6 text-left transition-colors hover:border-border-default"
+        className={cn(
+          'flex w-full items-center gap-4 rounded-xl border-2 border-dashed p-6 text-left transition-colors',
+          uploadedFile
+            ? 'border-accent-primary/40 bg-accent-primary-muted'
+            : 'border-border-subtle hover:border-border-default',
+          uploading && 'opacity-60'
+        )}
       >
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-bg-elevated">
           {uploadedFile ? (
@@ -108,7 +135,13 @@ export function KYCStepSelfie({ userId, onComplete }: Props) {
             {uploadedFile ? 'Tap to replace' : 'JPEG or PNG, max 10MB'}
           </p>
         </div>
-        {uploading && <span className="ml-auto text-xs text-text-tertiary">Uploading…</span>}
+
+        {/* Indeterminate shimmer while uploading */}
+        {uploading && (
+          <div className="ml-auto h-1 w-20 overflow-hidden rounded-full bg-bg-elevated">
+            <div className="shimmer h-full w-full" />
+          </div>
+        )}
         {uploadedFile && !uploading && (
           <span className="ml-auto text-xs font-medium text-accent-primary">Uploaded ✓</span>
         )}
@@ -118,7 +151,7 @@ export function KYCStepSelfie({ userId, onComplete }: Props) {
         type="button"
         onClick={handleSubmit}
         disabled={!uploadedFile || uploading || submitting}
-        className="w-full rounded-lg bg-accent-primary py-3 text-sm font-semibold text-text-inverse transition-all hover:bg-accent-primary-hover hover:shadow-glow-accent disabled:cursor-not-allowed disabled:opacity-50"
+        className="w-full rounded-lg bg-accent-primary py-3 text-sm font-semibold text-text-inverse transition-all hover:bg-accent-primary-hover hover:shadow-glow-accent active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50"
       >
         {submitting ? 'Submitting…' : 'Submit for Review'}
       </button>

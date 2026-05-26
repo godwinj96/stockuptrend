@@ -25,7 +25,7 @@ export default async function WithdrawalPage() {
 
   return (
     <div className="mx-auto max-w-2xl py-8">
-      <div className="mb-8">
+      <div className="anim-fade-up mb-8" style={{ animationDelay: '0ms' }}>
         <h1 className="font-display text-2xl font-bold text-text-primary">Withdraw Funds</h1>
         <p className="mt-1 text-sm text-text-secondary">
           Withdrawals are processed within 1 business day.
@@ -38,20 +38,22 @@ export default async function WithdrawalPage() {
         </div>
       )}
 
-      {kycApproved ? (
-        <WithdrawalForm
-          accountId={account?.id ?? ''}
-          balance={account?.balance ?? 0}
-          currency={account?.currency ?? 'USD'}
-          userId={user!.id}
-        />
-      ) : (
-        <div className="rounded-2xl border border-border-subtle bg-bg-surface p-8 text-center">
-          <p className="text-sm text-text-secondary">
-            Identity verification (KYC) must be approved before you can withdraw funds.
-          </p>
-        </div>
-      )}
+      <div className="anim-fade-up" style={{ animationDelay: '60ms' }}>
+        {kycApproved ? (
+          <WithdrawalForm
+            accountId={account?.id ?? ''}
+            balance={account?.balance ?? 0}
+            currency={account?.currency ?? 'USD'}
+            userId={user!.id}
+          />
+        ) : (
+          <div className="rounded-2xl border border-border-subtle bg-bg-surface p-8 text-center">
+            <p className="text-sm text-text-secondary">
+              Identity verification (KYC) must be approved before you can withdraw funds.
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

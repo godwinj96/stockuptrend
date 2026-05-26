@@ -1,8 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { AlertCircle } from 'lucide-react'
-import { CopyButton } from '@/components/shared/CopyButton'
+import { AlertCircle, ExternalLink, Loader2 } from 'lucide-react'
 
 interface Props {
   userId: string
@@ -10,35 +9,62 @@ interface Props {
   limits: { min: number; max: number }
 }
 
-type CryptoAsset = 'USDT_TRC20' | 'BTC' | 'ETH'
+type CryptoAsset = 'usdt' | 'btc' | 'eth'
 
-const CRYPTO_ADDRESSES: Record<CryptoAsset, { address: string; network: string; confirmations: string }> = {
-  USDT_TRC20: {
-    address: 'TRC20AddressWillBeGeneratedPerUser',
+const ASSETS: { id: CryptoAsset; label: string; walletAddress: string; network: string }[] = [
+  {
+    id: 'usdt',
+    label: 'USDT',
+    walletAddress: process.env.NEXT_PUBLIC_USDT_WALLET_ADDRESS ?? '',
     network: 'TRON (TRC-20)',
-    confirmations: '1 confirmation (~1 min)',
   },
-  BTC: {
-    address: 'BTC_AddressWillBeGeneratedPerUser',
+  {
+    id: 'btc',
+    label: 'Bitcoin (BTC)',
+    walletAddress: process.env.NEXT_PUBLIC_BTC_WALLET_ADDRESS ?? '',
     network: 'Bitcoin',
-    confirmations: '2 confirmations (~20 min)',
   },
-  ETH: {
-    address: 'ETH_AddressWillBeGeneratedPerUser',
+  {
+    id: 'eth',
+    label: 'Ethereum (ETH)',
+    walletAddress: process.env.NEXT_PUBLIC_ETH_WALLET_ADDRESS ?? '',
     network: 'Ethereum (ERC-20)',
-    confirmations: '12 confirmations (~3 min)',
   },
-}
+]
 
-const ASSET_LABELS: Record<CryptoAsset, string> = {
-  USDT_TRC20: 'USDT (TRC-20)',
-  BTC: 'Bitcoin (BTC)',
-  ETH: 'Ethereum (ETH)',
-}
+const moonpayEnabled = Boolean(process.env.NEXT_PUBLIC_MOONPAY_API_KEY)
 
 export function CryptoDepositInfo({ limits }: Props) {
-  const [selected, setSelected] = useState<CryptoAsset>('USDT_TRC20')
-  const info = CRYPTO_ADDRESSES[selected]
+  const [selected, setSelected] = useState<CryptoAsset>('usdt')
+  const [loading, setLoading] = useState(false)
+  const [widgetUrl, setWidgetUrl] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const asset = ASSETS.find((a) => a.id === selected)!
+
+  async function openMoonPay() {
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await fetch('/api/portal/moonpay', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          currencyCode: selected,
+          walletAddress: asset.walletAddress,
+        }),
+      })
+      const data = await res.json() as { signedUrl?: string; error?: string }
+      if (!res.ok || !data.signedUrl) {
+        throw new Error(data.error ?? 'Failed to load widget')
+      }
+      setWidgetUrl(data.signedUrl)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div className="space-y-5">
@@ -46,40 +72,75 @@ export function CryptoDepositInfo({ limits }: Props) {
       <div>
         <label className="mb-2 block text-sm font-medium text-text-primary">Select Asset</label>
         <div className="grid grid-cols-3 gap-2">
-          {(Object.keys(ASSET_LABELS) as CryptoAsset[]).map((asset) => (
+          {ASSETS.map((a) => (
             <button
-              key={asset}
+              key={a.id}
               type="button"
-              onClick={() => setSelected(asset)}
+              onClick={() => { setSelected(a.id); setWidgetUrl(null); setError(null) }}
               className={`rounded-lg border py-2 text-xs font-medium transition-colors ${
-                selected === asset
+                selected === a.id
                   ? 'border-accent-primary bg-accent-primary-muted text-accent-primary'
                   : 'border-border-subtle text-text-secondary hover:border-border-default'
               }`}
             >
-              {ASSET_LABELS[asset]}
+              {a.label}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Address */}
-      <div className="rounded-xl border border-border-subtle bg-bg-elevated p-4">
-        <p className="mb-2 text-xs font-medium text-text-secondary">Deposit Address</p>
-        <div className="flex items-center gap-2">
-          <p className="flex-1 break-all font-mono text-sm text-text-primary">{info.address}</p>
-          <CopyButton text={info.address} />
+      {/* MoonPay widget or fallback */}
+      {moonpayEnabled ? (
+        widgetUrl ? (
+          <div className="overflow-hidden rounded-xl border border-border-subtle">
+            <iframe
+              src={widgetUrl}
+              title="MoonPay — Buy Crypto"
+              className="h-[540px] w-full"
+              allow="accelerometer; autoplay; camera; gyroscope; payment"
+            />
+          </div>
+        ) : (
+          <div className="rounded-xl border border-border-subtle bg-bg-elevated p-6 text-center">
+            <p className="mb-1 text-sm font-medium text-text-primary">
+              Buy {asset.label} instantly with card or bank transfer
+            </p>
+            <p className="mb-4 text-xs text-text-tertiary">
+              Powered by MoonPay — funds credited once payment confirms
+            </p>
+            {error && (
+              <p className="mb-3 text-xs text-danger">{error}</p>
+            )}
+            <button
+              type="button"
+              onClick={openMoonPay}
+              disabled={loading}
+              className="inline-flex items-center gap-2 rounded-lg bg-accent-primary px-5 py-2.5 text-sm font-semibold text-text-inverse transition-all hover:bg-accent-primary-hover hover:shadow-glow-accent active:scale-[0.97] disabled:opacity-60"
+            >
+              {loading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <ExternalLink className="h-4 w-4" />
+              )}
+              {loading ? 'Loading…' : 'Buy with MoonPay'}
+            </button>
+          </div>
+        )
+      ) : (
+        <div className="rounded-xl border border-border-subtle bg-bg-elevated p-4">
+          <p className="mb-1 text-xs font-medium text-text-secondary">
+            Crypto purchases via MoonPay coming soon
+          </p>
+          <p className="text-xs text-text-tertiary">
+            To deposit crypto, transfer directly to the wallet address above once configured by your account manager.
+          </p>
         </div>
-        <div className="mt-3 space-y-1 text-xs text-text-tertiary">
-          <p>Network: <span className="text-text-secondary">{info.network}</span></p>
-          <p>Confirmations required: <span className="text-text-secondary">{info.confirmations}</span></p>
-        </div>
-      </div>
+      )}
 
       <div className="rounded-lg border border-danger/20 bg-danger/5 px-4 py-3 text-xs text-danger">
         <AlertCircle className="mb-0.5 mr-1.5 inline h-3.5 w-3.5" />
-        Only send {ASSET_LABELS[selected]} on the {info.network} network. Sending other assets or
-        using a different network will result in permanent loss of funds.
+        Only send {asset.label} on the {asset.network} network. Sending other assets or using a
+        different network will result in permanent loss of funds.
       </div>
 
       <p className="text-xs text-text-tertiary">

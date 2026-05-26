@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import { Building2, Bitcoin } from 'lucide-react'
+import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils/cn'
 import { formatCurrency } from '@/lib/utils/format'
 import { PAYMENT_LIMITS } from '@/lib/constants/payments'
@@ -93,7 +94,7 @@ export function WithdrawalForm({ accountId, balance, currency, userId: _userId }
         </p>
       </div>
 
-      {/* Method tabs */}
+      {/* Method tabs with sliding indicator */}
       <div className="mb-6 grid grid-cols-2 gap-2">
         {METHODS.map((m) => (
           <button
@@ -101,14 +102,21 @@ export function WithdrawalForm({ accountId, balance, currency, userId: _userId }
             type="button"
             onClick={() => { setMethod(m.id); reset() }}
             className={cn(
-              'flex items-center gap-2 rounded-xl border p-3 transition-all duration-200',
+              'relative flex items-center gap-2 rounded-xl border p-3 transition-colors duration-200',
               method === m.id
-                ? 'border-accent-primary bg-accent-primary-muted'
+                ? 'border-accent-primary'
                 : 'border-border-subtle hover:border-border-default'
             )}
           >
-            <m.icon className={cn('h-4 w-4', method === m.id ? 'text-accent-primary' : 'text-text-tertiary')} />
-            <div className="text-left">
+            {method === m.id && (
+              <motion.span
+                layoutId="withdrawal-tab-bg"
+                className="absolute inset-0 rounded-xl bg-accent-primary-muted"
+                transition={{ type: 'spring', stiffness: 400, damping: 35 }}
+              />
+            )}
+            <m.icon className={cn('relative h-4 w-4', method === m.id ? 'text-accent-primary' : 'text-text-tertiary')} />
+            <div className="relative text-left">
               <p className={cn('text-sm font-medium', method === m.id ? 'text-accent-primary' : 'text-text-secondary')}>
                 {m.label}
               </p>
@@ -214,7 +222,7 @@ export function WithdrawalForm({ accountId, balance, currency, userId: _userId }
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full rounded-lg bg-accent-primary py-3 text-sm font-semibold text-text-inverse transition-all hover:bg-accent-primary-hover hover:shadow-glow-accent disabled:opacity-50"
+          className="w-full rounded-lg bg-accent-primary py-3 text-sm font-semibold text-text-inverse transition-all hover:bg-accent-primary-hover hover:shadow-glow-accent active:scale-[0.97] disabled:opacity-50"
         >
           {isSubmitting ? 'Submitting…' : 'Request Withdrawal'}
         </button>

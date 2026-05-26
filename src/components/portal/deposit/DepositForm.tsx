@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { CreditCard, Building2, Bitcoin } from 'lucide-react'
+import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils/cn'
 import { CardDepositForm } from './CardDepositForm'
 import { BankTransferInstructions } from './BankTransferInstructions'
@@ -28,7 +29,7 @@ export function DepositForm({ accountId, accountNumber, currency, userId }: Depo
 
   return (
     <div className="rounded-2xl border border-border-subtle bg-bg-surface p-6">
-      {/* Method tabs */}
+      {/* Method tabs with sliding indicator */}
       <div className="mb-6 grid grid-cols-3 gap-2">
         {METHODS.map((m) => (
           <button
@@ -36,24 +37,31 @@ export function DepositForm({ accountId, accountNumber, currency, userId }: Depo
             type="button"
             onClick={() => setMethod(m.id)}
             className={cn(
-              'flex flex-col items-center rounded-xl border p-3 text-center transition-all duration-200',
+              'relative flex flex-col items-center rounded-xl border p-3 text-center transition-colors duration-200',
               method === m.id
-                ? 'border-accent-primary bg-accent-primary-muted'
-                : 'border-border-subtle hover:border-border-default hover:bg-bg-elevated'
+                ? 'border-accent-primary'
+                : 'border-border-subtle hover:border-border-default'
             )}
           >
+            {method === m.id && (
+              <motion.span
+                layoutId="deposit-tab-bg"
+                className="absolute inset-0 rounded-xl bg-accent-primary-muted"
+                transition={{ type: 'spring', stiffness: 400, damping: 35 }}
+              />
+            )}
             <m.icon
-              className={cn('mb-1 h-5 w-5', method === m.id ? 'text-accent-primary' : 'text-text-tertiary')}
+              className={cn('relative mb-1 h-5 w-5', method === m.id ? 'text-accent-primary' : 'text-text-tertiary')}
             />
             <span
               className={cn(
-                'text-sm font-medium',
+                'relative text-sm font-medium',
                 method === m.id ? 'text-accent-primary' : 'text-text-secondary'
               )}
             >
               {m.label}
             </span>
-            <span className="mt-0.5 text-xs text-text-tertiary">{m.detail}</span>
+            <span className="relative mt-0.5 text-xs text-text-tertiary">{m.detail}</span>
           </button>
         ))}
       </div>

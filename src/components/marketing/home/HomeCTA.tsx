@@ -4,7 +4,6 @@ import { useRef } from 'react'
 import Link from 'next/link'
 import { motion, useInView } from 'framer-motion'
 import { ArrowRight, TrendingUp } from 'lucide-react'
-import { fadeUpVariants, slideInLeftVariants } from '@/lib/constants/motion'
 import { ROUTES } from '@/lib/constants/routes'
 
 export function HomeCTA() {
@@ -28,11 +27,17 @@ export function HomeCTA() {
       />
 
       <div className="relative mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
-        <div ref={ref}>
+        {/* Curtain reveal wrapper */}
+        <motion.div
+          ref={ref}
+          initial={{ clipPath: 'inset(100% 0 0 0)' }}
+          animate={isInView ? { clipPath: 'inset(0% 0 0 0)' } : {}}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+        >
           <motion.div
-            variants={fadeUpVariants}
-            initial="hidden"
-            animate={isInView ? 'visible' : 'hidden'}
+            initial={{ opacity: 0, y: 12 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.5, delay: 0.25, ease: [0, 0, 0.2, 1] }}
             className="mb-3 inline-flex items-center gap-2 rounded-full border border-accent-primary/20 bg-accent-primary-muted px-4 py-1.5"
           >
             <TrendingUp className="h-3.5 w-3.5 text-accent-primary" />
@@ -40,9 +45,9 @@ export function HomeCTA() {
           </motion.div>
 
           <motion.h2
-            variants={slideInLeftVariants}
-            initial="hidden"
-            animate={isInView ? 'visible' : 'hidden'}
+            initial={{ opacity: 0, y: 16 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.55, delay: 0.32, ease: [0, 0, 0.2, 1] }}
             className="font-display text-4xl font-bold text-text-primary sm:text-5xl"
           >
             Ready to Start{' '}
@@ -50,10 +55,9 @@ export function HomeCTA() {
           </motion.h2>
 
           <motion.p
-            custom={1}
-            variants={fadeUpVariants}
-            initial="hidden"
-            animate={isInView ? 'visible' : 'hidden'}
+            initial={{ opacity: 0, y: 14 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.5, delay: 0.4, ease: [0, 0, 0.2, 1] }}
             className="mx-auto mt-4 max-w-xl text-lg text-text-secondary"
           >
             Open your account in minutes. Access 200+ instruments with professional tools,
@@ -61,10 +65,9 @@ export function HomeCTA() {
           </motion.p>
 
           <motion.div
-            custom={2}
-            variants={fadeUpVariants}
-            initial="hidden"
-            animate={isInView ? 'visible' : 'hidden'}
+            initial={{ opacity: 0, y: 12 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.5, delay: 0.48, ease: [0, 0, 0.2, 1] }}
             className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row"
           >
             <Link
@@ -83,15 +86,14 @@ export function HomeCTA() {
           </motion.div>
 
           <motion.p
-            custom={3}
-            variants={fadeUpVariants}
-            initial="hidden"
-            animate={isInView ? 'visible' : 'hidden'}
+            initial={{ opacity: 0 }}
+            animate={isInView ? { opacity: 1 } : {}}
+            transition={{ duration: 0.4, delay: 0.56 }}
             className="mt-5 text-xs text-text-tertiary"
           >
             No credit card required · KYC required to trade · CFDs carry risk of loss
           </motion.p>
-        </div>
+        </motion.div>
       </div>
     </section>
   )

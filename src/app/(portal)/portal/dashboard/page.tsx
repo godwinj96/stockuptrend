@@ -35,14 +35,19 @@ export default async function DashboardPage() {
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       {profile && (
-        <KYCStatusBanner
-          status={profile.kyc_status ?? 'not_started'}
-          rejectionReason={null}
-        />
+        <div className="anim-fade-up" style={{ animationDelay: '0ms' }}>
+          <KYCStatusBanner
+            status={profile.kyc_status ?? 'not_started'}
+            rejectionReason={null}
+          />
+        </div>
       )}
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="space-y-6 lg:col-span-2">
+        <div
+          className="anim-fade-up space-y-6 lg:col-span-2"
+          style={{ animationDelay: '80ms' }}
+        >
           <BalanceWidget
             balance={primaryAccount?.balance ?? 0}
             currency={primaryAccount?.currency ?? 'USD'}
@@ -52,7 +57,10 @@ export default async function DashboardPage() {
           <RecentTransactions initialTransactions={recentTransactions ?? []} userId={user.id} />
         </div>
 
-        <div className="space-y-6">
+        <div
+          className="anim-fade-up space-y-6"
+          style={{ animationDelay: '160ms' }}
+        >
           <QuickActions kycStatus={profile?.kyc_status ?? 'not_started'} />
         </div>
       </div>
