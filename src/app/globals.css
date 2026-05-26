@@ -1,0 +1,167 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* ── Backgrounds ── */
+    --bg-base: #080B12;
+    --bg-surface: #0E1420;
+    --bg-elevated: #141A2A;
+    --bg-overlay: #1B2236;
+
+    /* ── Accent: green — profit, success, primary CTAs ── */
+    --accent-primary: #00C27A;
+    --accent-primary-hover: #00D988;
+    --accent-primary-muted: rgba(0, 194, 122, 0.12);
+
+    /* ── Accent: blue — links, info, secondary actions ── */
+    --accent-secondary: #3E7BFA;
+    --accent-secondary-hover: #5B91FF;
+    --accent-secondary-muted: rgba(62, 123, 250, 0.12);
+
+    /* ── Accent: gold — premium/VIP tiers ── */
+    --accent-gold: #E8A530;
+    --accent-gold-muted: rgba(232, 165, 48, 0.12);
+
+    /* ── Semantic ── */
+    --color-danger: #F04E4E;
+    --color-danger-muted: rgba(240, 78, 78, 0.12);
+    --color-warning: #F5A623;
+    --color-warning-muted: rgba(245, 166, 35, 0.12);
+
+    /* ── Text ── */
+    --text-primary: #EEF2FF;
+    --text-secondary: #8B95B0;
+    --text-tertiary: #4D566B;
+    --text-inverse: #080B12;
+
+    /* ── Borders ── */
+    --border-subtle: rgba(255, 255, 255, 0.06);
+    --border-default: rgba(255, 255, 255, 0.10);
+    --border-strong: rgba(255, 255, 255, 0.18);
+    --border-accent: var(--accent-primary);
+
+    /* ── Shadows & Glows ── */
+    --shadow-card: 0 1px 3px rgba(0,0,0,0.4), 0 0 0 1px var(--border-subtle);
+    --shadow-elevated: 0 4px 24px rgba(0,0,0,0.5);
+    --glow-accent: 0 0 20px rgba(0, 194, 122, 0.25);
+    --glow-accent-strong: 0 0 40px rgba(0, 194, 122, 0.35);
+
+    /* ── shadcn/ui compatibility ── */
+    --radius: 0.625rem;
+  }
+
+  * {
+    @apply border-border-subtle;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-bg-base text-text-primary font-sans;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display;
+  }
+
+  /* Tabular numerics for all financial data */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--bg-base);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-default);
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--border-strong);
+  }
+
+  /* Focus ring */
+  :focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
+  }
+
+  /* Selection */
+  ::selection {
+    background: var(--accent-primary-muted);
+    color: var(--text-primary);
+  }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@layer utilities {
+  .anim-fade-up {
+    animation: fadeUp 0.6s cubic-bezier(0, 0, 0.2, 1) both;
+  }
+
+  /* Gradient text */
+  .gradient-text {
+    background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Shimmer animation for skeletons */
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      var(--bg-elevated) 0%,
+      var(--bg-overlay) 50%,
+      var(--bg-elevated) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s linear infinite;
+  }
+
+  /* Glass card effect */
+  .glass {
+    background: rgba(14, 20, 32, 0.8);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border-subtle);
+  }
+
+  /* Noise texture overlay (for hero and special sections) */
+  .noise::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    opacity: 0.4;
+  }
+
+  /* P&L colouring */
+  .profit { @apply text-accent-primary tabular-nums; }
+  .loss { @apply text-danger tabular-nums; }
+
+  /* Shared input field style */
+  .input-field {
+    @apply rounded-lg border border-border-default bg-bg-elevated px-3.5 py-2.5 text-sm text-text-primary placeholder-text-tertiary transition-all duration-150;
+    @apply focus:border-accent-primary focus:outline-none focus:ring-2 focus:ring-accent-primary-muted;
+  }
+  select.input-field {
+    @apply appearance-none;
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "Navigation": {
+    "trading": "Trading",
+    "instruments": "Trading Instruments",
+    "conditions": "Trading Conditions",
+    "platforms": "Platforms",
+    "accountTypes": "Account Types",
+    "company": "Company",
+    "about": "About Us",
+    "safety": "Safety of Funds",
+    "faq": "FAQ",
+    "contact": "Contact",
+    "education": "Education",
+    "login": "Log In",
+    "register": "Open Account"
+  },
+  "HomePage": {
+    "hero_title": "Trade the World's\nMarkets. Smarter.",
+    "hero_subtitle": "Access 200+ instruments across forex, crypto, stocks and commodities with tight spreads and powerful execution.",
+    "hero_cta_primary": "Open Account",
+    "hero_cta_secondary": "Explore Instruments",
+    "hero_risk_warning": "74% of retail CFD accounts lose money.",
+    "ticker_heading": "Live Markets",
+    "trust_traders": "50,000+",
+    "trust_traders_label": "Active Traders",
+    "trust_countries": "120+",
+    "trust_countries_label": "Countries",
+    "trust_instruments": "200+",
+    "trust_instruments_label": "Instruments",
+    "trust_support": "24/7",
+    "trust_support_label": "Support"
+  },
+  "RiskWarning": {
+    "full": "CFDs are complex instruments and come with a high risk of losing money rapidly due to leverage. 74% of retail investor accounts lose money when trading CFDs with this provider. You should consider whether you understand how CFDs work and whether you can afford to take the high risk of losing your money.",
+    "short": "74% of retail CFD accounts lose money. Trading carries risk."
+  },
+  "Auth": {
+    "login_title": "Welcome back",
+    "login_subtitle": "Sign in to your StockUptrend account",
+    "register_title": "Start trading today",
+    "register_subtitle": "Create your free account in minutes",
+    "email": "Email address",
+    "password": "Password",
+    "fullName": "Full name",
+    "phone": "Phone number",
+    "country": "Country",
+    "confirmPassword": "Confirm password",
+    "login_button": "Sign In",
+    "register_button": "Create Account",
+    "no_account": "Don't have an account?",
+    "has_account": "Already have an account?",
+    "forgot_password": "Forgot password?",
+    "terms_agree": "By creating an account, you agree to our"
+  },
+  "Portal": {
+    "dashboard": "Dashboard",
+    "deposit": "Deposit",
+    "withdrawal": "Withdrawal",
+    "tradeHistory": "Trade History",
+    "kyc": "Verification",
+    "support": "Support",
+    "settings": "Settings",
+    "signOut": "Sign Out"
+  }
+}
