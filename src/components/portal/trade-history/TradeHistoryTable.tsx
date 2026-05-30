@@ -33,7 +33,7 @@ export function TradeHistoryTable({ trades, totalCount, currentPage, pageSize }:
   }
 
   function exportCSV() {
-    const headers = ['Symbol', 'Direction', 'Volume', 'Open Price', 'Close Price', 'Open At', 'Close At', 'P&L']
+    const headers = ['Symbol', 'Direction', 'Volume', 'Open Price', 'Close Price', 'Open At', 'Close At', 'P&L', 'Result']
     const rows = trades.map((t) => [
       t.symbol,
       t.direction,
@@ -43,6 +43,7 @@ export function TradeHistoryTable({ trades, totalCount, currentPage, pageSize }:
       formatDateTime(t.open_at ?? ''),
       t.close_at ? formatDateTime(t.close_at) : '',
       t.profit_loss ?? '',
+      t.close_reason ?? '',
     ])
     const csv = [headers, ...rows].map((r) => r.join(',')).join('\n')
     const blob = new Blob([csv], { type: 'text/csv' })
@@ -91,7 +92,7 @@ export function TradeHistoryTable({ trades, totalCount, currentPage, pageSize }:
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border-subtle bg-bg-elevated">
-              {['Symbol', 'Side', 'Volume', 'Open', 'Close', 'Opened', 'Closed', 'P&L'].map((h) => (
+              {['Symbol', 'Side', 'Volume', 'Open', 'Close', 'Opened', 'Closed', 'P&L', 'Result'].map((h) => (
                 <th key={h} className="whitespace-nowrap px-4 py-3 text-left text-xs font-medium text-text-tertiary">
                   {h}
                 </th>
@@ -101,7 +102,7 @@ export function TradeHistoryTable({ trades, totalCount, currentPage, pageSize }:
           <tbody className="divide-y divide-border-subtle">
             {trades.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-4 py-12 text-center text-sm text-text-tertiary">
+                <td colSpan={9} className="px-4 py-12 text-center text-sm text-text-tertiary">
                   No trades found
                 </td>
               </tr>
@@ -135,10 +136,23 @@ export function TradeHistoryTable({ trades, totalCount, currentPage, pageSize }:
                   <td className="whitespace-nowrap px-4 py-3 text-xs text-text-tertiary">
                     {trade.close_at ? formatDateTime(trade.close_at) : '—'}
                   </td>
-                  <td className={cn('px-4 py-3 font-medium', (trade.profit_loss ?? 0) >= 0 ? 'text-accent-primary' : 'text-danger')}>
+                  <td className={cn('px-4 py-3 font-medium tabular-nums', (trade.profit_loss ?? 0) >= 0 ? 'text-accent-primary' : 'text-danger')}>
                     {trade.profit_loss != null
                       ? `${trade.profit_loss >= 0 ? '+' : ''}${formatCurrency(trade.profit_loss)}`
                       : '—'}
+                  </td>
+                  <td className="px-4 py-3">
+                    {trade.close_reason === 'take_profit' ? (
+                      <span className="inline-block rounded-full bg-accent-primary-muted px-2.5 py-0.5 text-xs font-semibold text-accent-primary">
+                        TP Hit
+                      </span>
+                    ) : trade.close_reason === 'stop_loss' ? (
+                      <span className="inline-block rounded-full bg-danger-muted px-2.5 py-0.5 text-xs font-semibold text-danger">
+                        SL Hit
+                      </span>
+                    ) : (
+                      <span className="text-xs text-text-tertiary">—</span>
+                    )}
                   </td>
                 </tr>
               ))

@@ -3,7 +3,7 @@
 import useSWR from 'swr'
 import { ArrowUpRight, ArrowDownRight } from 'lucide-react'
 import { EmptyState } from '@/components/shared/EmptyState'
-import { formatDateTime } from '@/lib/utils/format'
+import { formatRelativeTime } from '@/lib/utils/format'
 import { cn } from '@/lib/utils/cn'
 import type { Trade } from '@/lib/supabase/types'
 
@@ -19,13 +19,10 @@ interface OpenPositionsResponse {
 const fetcher = (url: string) =>
   fetch(url).then((r) => r.json() as Promise<OpenPositionsResponse>)
 
-// Stable per-trade estimated P&L based on open price variance (display only)
-function estimateUnrealisedPnL(trade: Trade): number {
-  // Use trade id as a seed for a stable value during the session
-  const seed = trade.id.charCodeAt(0) + trade.id.charCodeAt(1)
-  const magnitude = trade.open_price * 0.002 * ((seed % 10) / 10)
-  const sign = seed % 3 === 0 ? -1 : 1
-  return parseFloat((sign * magnitude * trade.volume).toFixed(2))
+function formatPrice(price: number | null, openPrice: number): string {
+  if (price === null) return '—'
+  const decimals = openPrice > 100 ? 2 : 5
+  return price.toFixed(decimals)
 }
 
 export function OpenPositionsTable({ initialTrades, accountId }: OpenPositionsTableProps) {
@@ -60,22 +57,23 @@ export function OpenPositionsTable({ initialTrades, accountId }: OpenPositionsTa
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[480px] text-sm">
+        <table className="w-full min-w-[560px] text-sm">
           <thead>
             <tr className="border-b border-border-subtle">
               <th className="px-5 py-3 text-left text-xs font-medium text-text-tertiary">Symbol</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-text-tertiary">Side</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-text-tertiary">Volume</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-text-tertiary">Open Price</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-text-tertiary">Unr. P&L</th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-text-tertiary">Vol.</th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-text-tertiary">Entry</th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-text-tertiary">Stop Loss</th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-text-tertiary">Take Profit</th>
               <th className="px-5 py-3 text-right text-xs font-medium text-text-tertiary">Opened</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border-subtle">
             {isLoading && trades.length === 0
-              ? Array.from({ length: 3 }).map((_, i) => (
+              ? Array.from({ length: 4 }).map((_, i) => (
                   <tr key={i}>
-                    {Array.from({ length: 6 }).map((__, j) => (
+                    {Array.from({ length: 7 }).map((__, j) => (
                       <td key={j} className="px-5 py-3">
                         <div className="h-3 animate-pulse rounded bg-bg-overlay" />
                       </td>
@@ -83,7 +81,6 @@ export function OpenPositionsTable({ initialTrades, accountId }: OpenPositionsTa
                   </tr>
                 ))
               : trades.map((trade) => {
-                  const unrealised = estimateUnrealisedPnL(trade)
                   const isBuy = trade.direction === 'buy'
                   return (
                     <tr key={trade.id} className="transition-colors hover:bg-bg-elevated">
@@ -113,13 +110,20 @@ export function OpenPositionsTable({ initialTrades, accountId }: OpenPositionsTa
                         {trade.volume}
                       </td>
                       <td className="px-4 py-3 text-right font-mono text-xs text-text-secondary">
-                        {trade.open_price.toFixed(trade.open_price > 100 ? 2 : 5)}
+                        {formatPrice(trade.open_price, trade.open_price)}
                       </td>
-                      <td className={cn('px-4 py-3 text-right font-mono text-xs font-semibold tabular-nums', unrealised >= 0 ? 'text-accent-primary' : 'text-danger')}>
-                        {unrealised >= 0 ? '+' : ''}{unrealised.toFixed(2)}
+                      <td className="px-4 py-3 text-right">
+                        <span className="inline-block rounded-md bg-danger-muted px-2 py-0.5 font-mono text-xs font-medium text-danger">
+                          {formatPrice(trade.stop_loss, trade.open_price)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <span className="inline-block rounded-md bg-accent-primary-muted px-2 py-0.5 font-mono text-xs font-medium text-accent-primary">
+                          {formatPrice(trade.take_profit, trade.open_price)}
+                        </span>
                       </td>
                       <td className="px-5 py-3 text-right text-xs text-text-tertiary">
-                        {trade.open_at ? formatDateTime(trade.open_at) : '—'}
+                        {trade.open_at ? formatRelativeTime(trade.open_at) : '—'}
                       </td>
                     </tr>
                   )

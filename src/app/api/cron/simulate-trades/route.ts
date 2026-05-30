@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import {
-  computeTradePnL,
-  computeClosePrice,
-  selectTradesToClose,
+  simulateTradeClose,
   buildNewTrades,
-  getCloseCycleCount,
   DEFAULT_STRATEGY,
 } from '@/lib/trading/simulate'
 import type { StrategyConfig, OpenTradeRow } from '@/lib/trading/simulate'
@@ -25,11 +22,11 @@ interface AccountRow {
 }
 
 export async function GET(_req: NextRequest) {
-
   const serviceSupabase = createServiceRoleClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = serviceSupabase as any
-  const now = new Date().toISOString()
+  const nowMs = Date.now()
+  const nowIso = new Date(nowMs).toISOString()
 
   const { data: accountsRaw, error: accountsError } = await serviceSupabase
     .from('accounts')
@@ -68,27 +65,30 @@ export async function GET(_req: NextRequest) {
 
       const { data: openTradesRaw } = await serviceSupabase
         .from('trades')
-        .select('id, symbol, direction, volume, open_price, open_at, account_id, user_id')
+        .select('id, symbol, direction, volume, open_price, stop_loss, take_profit, open_at, account_id, user_id')
         .eq('account_id', account.id)
         .eq('status', 'open')
 
       const openTrades = (openTradesRaw ?? []) as OpenTradeRow[]
-      const closeCount = getCloseCycleCount(strategy, openTrades.length)
-      const tradesToClose = selectTradesToClose(openTrades, closeCount)
 
       let balanceDelta = 0
       let winCount = 0
+      let closedCount = 0
 
-      for (const trade of tradesToClose) {
-        const currentBalance = (account.balance ?? 0) + balanceDelta
-        if (currentBalance <= 0) break
-
-        const { profit_loss, is_win } = computeTradePnL(currentBalance, strategy)
-        const close_price = computeClosePrice(trade, profit_loss)
+      // Evaluate every open trade individually — close if TP or SL hit
+      for (const trade of openTrades) {
+        const result = simulateTradeClose(trade, strategy, nowMs)
+        if (!result) continue
 
         const { error: updateErr } = await db
           .from('trades')
-          .update({ status: 'closed', close_price, profit_loss, close_at: now })
+          .update({
+            status:       'closed',
+            close_price:  result.close_price,
+            profit_loss:  result.profit_loss,
+            close_at:     result.close_at,
+            close_reason: result.close_reason,
+          })
           .eq('id', trade.id)
 
         if (updateErr) {
@@ -96,15 +96,17 @@ export async function GET(_req: NextRequest) {
           continue
         }
 
-        balanceDelta += profit_loss
-        if (is_win) winCount++
+        balanceDelta += result.profit_loss
+        if (result.close_reason === 'take_profit') winCount++
+        closedCount++
 
-        const pnlSign = profit_loss >= 0 ? '+' : ''
+        const sign = result.profit_loss >= 0 ? '+' : ''
+        const resultLabel = result.close_reason === 'take_profit' ? '✅ TP Hit' : '🔴 SL Hit'
         await db.from('notifications').insert({
           user_id: account.user_id,
-          type: 'trade_closed',
-          title: `Trade Closed: ${trade.symbol}`,
-          body: `Your ${trade.direction.toUpperCase()} on ${trade.symbol} closed with ${pnlSign}$${Math.abs(profit_loss).toFixed(2)} P&L.`,
+          type:    'trade_closed',
+          title:   `${resultLabel}: ${trade.symbol}`,
+          body:    `Your ${trade.direction.toUpperCase()} on ${trade.symbol} closed ${result.close_reason === 'take_profit' ? 'at take profit' : 'at stop loss'} — ${sign}$${Math.abs(result.profit_loss).toFixed(2)}.`,
           is_read: false,
         })
       }
@@ -114,32 +116,33 @@ export async function GET(_req: NextRequest) {
       await db
         .from('accounts')
         .update({
-          balance: newBalance,
-          total_profit: (account.total_profit ?? 0) + balanceDelta,
-          total_trades: (account.total_trades ?? 0) + tradesToClose.length,
+          balance:        newBalance,
+          total_profit:   (account.total_profit ?? 0) + balanceDelta,
+          total_trades:   (account.total_trades ?? 0) + closedCount,
           winning_trades: (account.winning_trades ?? 0) + winCount,
         })
         .eq('id', account.id)
 
       await db.from('portfolio_snapshots').insert({
-        user_id: account.user_id,
-        account_id: account.id,
-        balance: newBalance,
-        equity: newBalance,
-        snapshot_at: now,
+        user_id:     account.user_id,
+        account_id:  account.id,
+        balance:     newBalance,
+        equity:      newBalance,
+        snapshot_at: nowIso,
       })
 
+      // Open new trades with staggered timestamps and TP/SL
       const newTradeSpecs = buildNewTrades(account.id, account.user_id, openTrades, strategy)
       if (newTradeSpecs.length > 0) {
         await db.from('trades').insert(newTradeSpecs)
       }
 
-      results.push({ accountId: account.id, closed: tradesToClose.length, opened: newTradeSpecs.length })
+      results.push({ accountId: account.id, closed: closedCount, opened: newTradeSpecs.length })
     } catch (err) {
       console.error(`simulate-trades: error processing account ${account.id}`, err)
       results.push({ accountId: account.id, closed: 0, opened: 0, error: String(err) })
     }
   }
 
-  return NextResponse.json({ success: true, processed: results.length, results, timestamp: now })
+  return NextResponse.json({ success: true, processed: results.length, results, timestamp: nowIso })
 }

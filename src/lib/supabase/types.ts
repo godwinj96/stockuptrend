@@ -265,6 +265,7 @@ export type Database = {
           account_id: string
           close_at: string | null
           close_price: number | null
+          close_reason: string | null
           created_at: string | null
           direction: Database["public"]["Enums"]["trade_direction"]
           id: string
@@ -272,7 +273,9 @@ export type Database = {
           open_price: number
           profit_loss: number | null
           status: Database["public"]["Enums"]["trade_status"] | null
+          stop_loss: number | null
           symbol: string
+          take_profit: number | null
           user_id: string
           volume: number
         }
@@ -280,6 +283,7 @@ export type Database = {
           account_id: string
           close_at?: string | null
           close_price?: number | null
+          close_reason?: string | null
           created_at?: string | null
           direction: Database["public"]["Enums"]["trade_direction"]
           id?: string
@@ -287,7 +291,9 @@ export type Database = {
           open_price: number
           profit_loss?: number | null
           status?: Database["public"]["Enums"]["trade_status"] | null
+          stop_loss?: number | null
           symbol: string
+          take_profit?: number | null
           user_id: string
           volume: number
         }
@@ -295,6 +301,7 @@ export type Database = {
           account_id?: string
           close_at?: string | null
           close_price?: number | null
+          close_reason?: string | null
           created_at?: string | null
           direction?: Database["public"]["Enums"]["trade_direction"]
           id?: string
@@ -302,7 +309,9 @@ export type Database = {
           open_price?: number
           profit_loss?: number | null
           status?: Database["public"]["Enums"]["trade_status"] | null
+          stop_loss?: number | null
           symbol?: string
+          take_profit?: number | null
           user_id?: string
           volume?: number
         }
