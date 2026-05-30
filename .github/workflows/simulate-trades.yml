@@ -3,7 +3,7 @@ name: AI Trade Simulation
 on:
   schedule:
     - cron: '*/30 * * * *'
-  workflow_dispatch: # allows manual trigger from GitHub UI
+  workflow_dispatch:
 
 jobs:
   simulate:
@@ -12,12 +12,16 @@ jobs:
     steps:
       - name: Trigger trade simulation
         run: |
-          response=$(curl -s -o /dev/null -w "%{http_code}" \
+          echo "Calling simulation endpoint..."
+          response=$(curl -s -w "\n%{http_code}" \
             -X GET \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             https://stockuptrend.vercel.app/api/cron/simulate-trades)
-          echo "Response status: $response"
-          if [ "$response" != "200" ]; then
-            echo "Cron endpoint returned non-200 status: $response"
+          body=$(echo "$response" | head -n -1)
+          status=$(echo "$response" | tail -n 1)
+          echo "Status: $status"
+          echo "Body: $body"
+          if [ "$status" != "200" ]; then
+            echo "ERROR: endpoint returned $status"
             exit 1
           fi
