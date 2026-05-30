@@ -26,7 +26,9 @@ interface AccountRow {
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  const token = authHeader?.replace('Bearer ', '').trim()
+  const expected = process.env.TRADE_SIM_TOKEN?.trim()
+  if (!expected || token !== expected) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
