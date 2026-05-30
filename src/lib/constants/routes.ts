@@ -26,6 +26,8 @@ export const ROUTES = {
   },
   portal: {
     dashboard: '/portal/dashboard',
+    portfolio: '/portal/portfolio',
+    aiTrading: '/portal/ai-trading',
     deposit: '/portal/deposit',
     withdrawal: '/portal/withdrawal',
     tradeHistory: '/portal/trade-history',

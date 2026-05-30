@@ -16,35 +16,92 @@ export type Database = {
         Row: {
           account_number: string
           account_type: Database["public"]["Enums"]["account_type"] | null
+          ai_active: boolean | null
           balance: number | null
           created_at: string | null
           currency: string | null
           id: string
           is_active: boolean | null
           leverage: number | null
+          strategy_id: string | null
+          total_profit: number | null
+          total_trades: number | null
           user_id: string
+          winning_trades: number | null
         }
         Insert: {
           account_number: string
           account_type?: Database["public"]["Enums"]["account_type"] | null
+          ai_active?: boolean | null
           balance?: number | null
           created_at?: string | null
           currency?: string | null
           id?: string
           is_active?: boolean | null
           leverage?: number | null
+          strategy_id?: string | null
+          total_profit?: number | null
+          total_trades?: number | null
           user_id: string
+          winning_trades?: number | null
         }
         Update: {
           account_number?: string
           account_type?: Database["public"]["Enums"]["account_type"] | null
+          ai_active?: boolean | null
           balance?: number | null
           created_at?: string | null
           currency?: string | null
           id?: string
           is_active?: boolean | null
           leverage?: number | null
+          strategy_id?: string | null
+          total_profit?: number | null
+          total_trades?: number | null
           user_id?: string
+          winning_trades?: number | null
+        }
+        Relationships: []
+      }
+      ai_strategies: {
+        Row: {
+          closes_per_cycle_max: number
+          closes_per_cycle_min: number
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          risk_per_trade: number
+          slug: string
+          trades_per_cycle_max: number
+          trades_per_cycle_min: number
+          win_rate: number
+        }
+        Insert: {
+          closes_per_cycle_max?: number
+          closes_per_cycle_min?: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          risk_per_trade: number
+          slug: string
+          trades_per_cycle_max?: number
+          trades_per_cycle_min?: number
+          win_rate: number
+        }
+        Update: {
+          closes_per_cycle_max?: number
+          closes_per_cycle_min?: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          risk_per_trade?: number
+          slug?: string
+          trades_per_cycle_max?: number
+          trades_per_cycle_min?: number
+          win_rate?: number
         }
         Relationships: []
       }
@@ -252,6 +309,44 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "trades_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portfolio_snapshots: {
+        Row: {
+          account_id: string
+          balance: number
+          created_at: string | null
+          equity: number
+          id: string
+          snapshot_at: string
+          user_id: string
+        }
+        Insert: {
+          account_id: string
+          balance: number
+          created_at?: string | null
+          equity: number
+          id?: string
+          snapshot_at?: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string
+          balance?: number
+          created_at?: string | null
+          equity?: number
+          id?: string
+          snapshot_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portfolio_snapshots_account_id_fkey"
             columns: ["account_id"]
             isOneToOne: false
             referencedRelation: "accounts"
@@ -497,3 +592,5 @@ export type TransactionStatus = Database["public"]["Enums"]["transaction_status"
 export type TradeDirection = Database["public"]["Enums"]["trade_direction"]
 export type TradeStatus = Database["public"]["Enums"]["trade_status"]
 export type TicketStatus = Database["public"]["Enums"]["ticket_status"]
+export type AIStrategy = Database["public"]["Tables"]["ai_strategies"]["Row"]
+export type PortfolioSnapshot = Database["public"]["Tables"]["portfolio_snapshots"]["Row"]

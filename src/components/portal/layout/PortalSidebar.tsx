@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard,
+  BarChart3,
+  Bot,
   ArrowDownToLine,
   ArrowUpFromLine,
   LineChart,
@@ -26,13 +28,15 @@ interface PortalSidebarProps {
 }
 
 const NAV_ITEMS = [
-  { label: 'Dashboard', href: ROUTES.portal.dashboard, icon: LayoutDashboard },
-  { label: 'Deposit', href: ROUTES.portal.deposit, icon: ArrowDownToLine },
-  { label: 'Withdrawal', href: ROUTES.portal.withdrawal, icon: ArrowUpFromLine },
+  { label: 'Dashboard',   href: ROUTES.portal.dashboard,    icon: LayoutDashboard },
+  { label: 'Portfolio',   href: ROUTES.portal.portfolio,    icon: BarChart3 },
+  { label: 'AI Trading',  href: ROUTES.portal.aiTrading,    icon: Bot },
+  { label: 'Deposit',     href: ROUTES.portal.deposit,      icon: ArrowDownToLine },
+  { label: 'Withdrawal',  href: ROUTES.portal.withdrawal,   icon: ArrowUpFromLine },
   { label: 'Trade History', href: ROUTES.portal.tradeHistory, icon: LineChart },
-  { label: 'Verification', href: ROUTES.portal.kyc, icon: ShieldCheck },
-  { label: 'Support', href: ROUTES.portal.support, icon: MessageSquare },
-  { label: 'Settings', href: ROUTES.portal.settings, icon: Settings },
+  { label: 'Verification', href: ROUTES.portal.kyc,         icon: ShieldCheck },
+  { label: 'Support',     href: ROUTES.portal.support,      icon: MessageSquare },
+  { label: 'Settings',    href: ROUTES.portal.settings,     icon: Settings },
 ]
 
 

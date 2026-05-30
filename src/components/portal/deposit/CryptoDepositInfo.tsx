@@ -1,7 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { AlertCircle, ExternalLink, Loader2 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import { toast } from 'sonner'
+import { Loader2, Info } from 'lucide-react'
+import { AnimatedCheckmark } from '@/components/shared/AnimatedCheckmark'
+import { formatCurrency } from '@/lib/utils/format'
 
 interface Props {
   userId: string
@@ -9,142 +16,176 @@ interface Props {
   limits: { min: number; max: number }
 }
 
-type CryptoAsset = 'usdt' | 'btc' | 'eth'
+type CryptoCurrency = 'BTC' | 'ETH' | 'BNB' | 'USDT'
 
-const ASSETS: { id: CryptoAsset; label: string; walletAddress: string; network: string }[] = [
-  {
-    id: 'usdt',
-    label: 'USDT',
-    walletAddress: process.env.NEXT_PUBLIC_USDT_WALLET_ADDRESS ?? '',
-    network: 'TRON (TRC-20)',
-  },
-  {
-    id: 'btc',
-    label: 'Bitcoin (BTC)',
-    walletAddress: process.env.NEXT_PUBLIC_BTC_WALLET_ADDRESS ?? '',
-    network: 'Bitcoin',
-  },
-  {
-    id: 'eth',
-    label: 'Ethereum (ETH)',
-    walletAddress: process.env.NEXT_PUBLIC_ETH_WALLET_ADDRESS ?? '',
-    network: 'Ethereum (ERC-20)',
-  },
+const CURRENCIES: { id: CryptoCurrency; label: string; network: string }[] = [
+  { id: 'BTC',  label: 'Bitcoin',  network: 'BTC' },
+  { id: 'ETH',  label: 'Ethereum', network: 'ERC-20' },
+  { id: 'BNB',  label: 'BNB',      network: 'BEP-20' },
+  { id: 'USDT', label: 'USDT',     network: 'TRC-20' },
 ]
 
-const moonpayEnabled = Boolean(process.env.NEXT_PUBLIC_MOONPAY_API_KEY)
+const QUICK_AMOUNTS = [100, 500, 1000, 5000]
 
-export function CryptoDepositInfo({ limits }: Props) {
-  const [selected, setSelected] = useState<CryptoAsset>('usdt')
-  const [loading, setLoading] = useState(false)
-  const [widgetUrl, setWidgetUrl] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
+const schema = z.object({
+  amount: z
+    .string()
+    .min(1, 'Amount is required')
+    .transform(Number)
+    .pipe(z.number().min(10, 'Minimum deposit is $10').max(50_000, 'Maximum deposit is $50,000')),
+})
 
-  const asset = ASSETS.find((a) => a.id === selected)!
+type FormValues = z.input<typeof schema>
 
-  async function openMoonPay() {
-    setLoading(true)
-    setError(null)
+export function CryptoDepositInfo({ accountId, limits }: Props) {
+  const router = useRouter()
+  const [selectedCurrency, setSelectedCurrency] = useState<CryptoCurrency>('USDT')
+  const [succeeded, setSucceeded] = useState(false)
+  const [depositedAmount, setDepositedAmount] = useState(0)
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors, isSubmitting },
+  } = useForm<FormValues>({
+    resolver: zodResolver(schema),
+  })
+
+  async function onSubmit(values: FormValues) {
+    const amount = Number(values.amount)
     try {
-      const res = await fetch('/api/portal/moonpay', {
+      const res = await fetch('/api/portal/demo-deposit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          currencyCode: selected,
-          walletAddress: asset.walletAddress,
-        }),
+        body: JSON.stringify({ accountId, amount, currency: selectedCurrency }),
       })
-      const data = await res.json() as { signedUrl?: string; error?: string }
-      if (!res.ok || !data.signedUrl) {
-        throw new Error(data.error ?? 'Failed to load widget')
+      const data = (await res.json()) as { success?: boolean; error?: string }
+      if (!res.ok || !data.success) {
+        throw new Error(data.error ?? 'Deposit failed')
       }
-      setWidgetUrl(data.signedUrl)
+      setDepositedAmount(amount)
+      setSucceeded(true)
+      toast.success(`${formatCurrency(amount)} credited to your account`)
+      router.refresh()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong')
-    } finally {
-      setLoading(false)
+      toast.error(err instanceof Error ? err.message : 'Something went wrong')
     }
+  }
+
+  if (succeeded) {
+    return (
+      <div className="flex flex-col items-center gap-4 py-8 text-center">
+        <AnimatedCheckmark size={64} />
+        <div>
+          <p className="font-display text-lg font-semibold text-text-primary">
+            {formatCurrency(depositedAmount)} Deposited
+          </p>
+          <p className="mt-1 text-sm text-text-secondary">
+            Funds have been credited to your account. The AI will begin trading shortly.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setSucceeded(false)}
+          className="text-sm text-accent-primary underline-offset-2 hover:underline"
+        >
+          Make another deposit
+        </button>
+      </div>
+    )
   }
 
   return (
     <div className="space-y-5">
-      {/* Asset selector */}
+      {/* Demo mode badge */}
+      <div className="flex items-center gap-2 rounded-lg border border-warning/20 bg-warning/5 px-4 py-2.5">
+        <Info className="h-3.5 w-3.5 shrink-0 text-warning" />
+        <span className="text-xs text-warning">
+          <span className="font-semibold">DEMO MODE</span> — No real funds are transferred. This
+          is a simulated deposit for demonstration purposes only.
+        </span>
+      </div>
+
+      {/* Currency selector */}
       <div>
-        <label className="mb-2 block text-sm font-medium text-text-primary">Select Asset</label>
-        <div className="grid grid-cols-3 gap-2">
-          {ASSETS.map((a) => (
+        <label className="mb-2 block text-sm font-medium text-text-primary">Select Currency</label>
+        <div className="grid grid-cols-4 gap-2">
+          {CURRENCIES.map((c) => (
             <button
-              key={a.id}
+              key={c.id}
               type="button"
-              onClick={() => { setSelected(a.id); setWidgetUrl(null); setError(null) }}
-              className={`rounded-lg border py-2 text-xs font-medium transition-colors ${
-                selected === a.id
+              onClick={() => setSelectedCurrency(c.id)}
+              className={`rounded-lg border py-2.5 text-xs font-medium transition-colors ${
+                selectedCurrency === c.id
                   ? 'border-accent-primary bg-accent-primary-muted text-accent-primary'
-                  : 'border-border-subtle text-text-secondary hover:border-border-default'
+                  : 'border-border-subtle text-text-secondary hover:border-border-default hover:text-text-primary'
               }`}
             >
-              {a.label}
+              <span className="block font-semibold">{c.id}</span>
+              <span className="block text-[10px] opacity-70">{c.network}</span>
             </button>
           ))}
         </div>
       </div>
 
-      {/* MoonPay widget or fallback */}
-      {moonpayEnabled ? (
-        widgetUrl ? (
-          <div className="overflow-hidden rounded-xl border border-border-subtle">
-            <iframe
-              src={widgetUrl}
-              title="MoonPay — Buy Crypto"
-              className="h-[540px] w-full"
-              allow="accelerometer; autoplay; camera; gyroscope; payment"
+      {/* Amount input */}
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div>
+          <label className="mb-2 block text-sm font-medium text-text-primary">
+            Deposit Amount (USD equivalent)
+          </label>
+          <div className="relative">
+            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-text-tertiary">
+              $
+            </span>
+            <input
+              {...register('amount')}
+              type="number"
+              min={limits.min}
+              max={limits.max}
+              step="1"
+              placeholder="Enter amount"
+              className="input-field w-full pl-7"
             />
           </div>
-        ) : (
-          <div className="rounded-xl border border-border-subtle bg-bg-elevated p-6 text-center">
-            <p className="mb-1 text-sm font-medium text-text-primary">
-              Buy {asset.label} instantly with card or bank transfer
-            </p>
-            <p className="mb-4 text-xs text-text-tertiary">
-              Powered by MoonPay — funds credited once payment confirms
-            </p>
-            {error && (
-              <p className="mb-3 text-xs text-danger">{error}</p>
-            )}
-            <button
-              type="button"
-              onClick={openMoonPay}
-              disabled={loading}
-              className="inline-flex items-center gap-2 rounded-lg bg-accent-primary px-5 py-2.5 text-sm font-semibold text-text-inverse transition-all hover:bg-accent-primary-hover hover:shadow-glow-accent active:scale-[0.97] disabled:opacity-60"
-            >
-              {loading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <ExternalLink className="h-4 w-4" />
-              )}
-              {loading ? 'Loading…' : 'Buy with MoonPay'}
-            </button>
-          </div>
-        )
-      ) : (
-        <div className="rounded-xl border border-border-subtle bg-bg-elevated p-4">
-          <p className="mb-1 text-xs font-medium text-text-secondary">
-            Crypto purchases via MoonPay coming soon
-          </p>
-          <p className="text-xs text-text-tertiary">
-            To deposit crypto, transfer directly to the wallet address above once configured by your account manager.
-          </p>
+          {errors.amount && (
+            <p className="mt-1 text-xs text-danger">{errors.amount.message}</p>
+          )}
         </div>
-      )}
 
-      <div className="rounded-lg border border-danger/20 bg-danger/5 px-4 py-3 text-xs text-danger">
-        <AlertCircle className="mb-0.5 mr-1.5 inline h-3.5 w-3.5" />
-        Only send {asset.label} on the {asset.network} network. Sending other assets or using a
-        different network will result in permanent loss of funds.
-      </div>
+        {/* Quick amounts */}
+        <div className="flex flex-wrap gap-2">
+          {QUICK_AMOUNTS.map((amt) => (
+            <button
+              key={amt}
+              type="button"
+              onClick={() => setValue('amount', String(amt) as unknown as FormValues['amount'])}
+              className="rounded-lg border border-border-subtle px-3 py-1.5 text-xs font-medium text-text-secondary transition-colors hover:border-accent-primary hover:bg-accent-primary-muted hover:text-accent-primary"
+            >
+              ${amt.toLocaleString()}
+            </button>
+          ))}
+        </div>
+
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-accent-primary py-3 text-sm font-semibold text-text-inverse transition-all hover:bg-accent-primary-hover hover:shadow-glow-accent active:scale-[0.98] disabled:opacity-60"
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Processing…
+            </>
+          ) : (
+            `Simulate ${selectedCurrency} Deposit`
+          )}
+        </button>
+      </form>
 
       <p className="text-xs text-text-tertiary">
-        Minimum: ${limits.min} equivalent · Maximum: ${limits.max.toLocaleString()} equivalent
+        Min: ${limits.min} · Max: ${limits.max.toLocaleString()} · Credited instantly
       </p>
     </div>
   )

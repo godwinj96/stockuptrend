@@ -1,14 +1,17 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import { Bell, Menu } from 'lucide-react'
+import { Menu } from 'lucide-react'
 
 interface PortalHeaderProps {
   avatarSlot: React.ReactNode
+  notificationsSlot: React.ReactNode
 }
 
 const PAGE_TITLES: Record<string, string> = {
   '/portal/dashboard': 'Dashboard',
+  '/portal/portfolio': 'Portfolio',
+  '/portal/ai-trading': 'AI Trading',
   '/portal/deposit': 'Deposit Funds',
   '/portal/withdrawal': 'Withdraw Funds',
   '/portal/trade-history': 'Trade History',
@@ -17,7 +20,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/portal/settings': 'Account Settings',
 }
 
-export function PortalHeader({ avatarSlot }: PortalHeaderProps) {
+export function PortalHeader({ avatarSlot, notificationsSlot }: PortalHeaderProps) {
   const pathname = usePathname()
 
   const pageTitle =
@@ -36,14 +39,7 @@ export function PortalHeader({ avatarSlot }: PortalHeaderProps) {
       </div>
 
       <div className="flex items-center gap-2">
-        <button
-          className="relative flex h-8 w-8 items-center justify-center rounded-lg text-text-secondary transition-colors hover:bg-bg-elevated hover:text-text-primary"
-          aria-label="Notifications"
-        >
-          <Bell className="h-4 w-4" />
-          <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-accent-primary" />
-        </button>
-
+        {notificationsSlot}
         {avatarSlot}
       </div>
     </header>

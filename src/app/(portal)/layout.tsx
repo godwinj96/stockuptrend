@@ -5,6 +5,7 @@ import { PortalSidebar } from '@/components/portal/layout/PortalSidebar'
 import { PortalHeader } from '@/components/portal/layout/PortalHeader'
 import { SidebarUserInfo, SidebarUserInfoSkeleton } from '@/components/portal/layout/SidebarUserInfo'
 import { HeaderAvatar, HeaderAvatarSkeleton } from '@/components/portal/layout/HeaderAvatar'
+import { NotificationDropdown } from '@/components/portal/notifications/NotificationDropdown'
 import { ROUTES } from '@/lib/constants/routes'
 
 export default async function PortalLayout({ children }: { children: React.ReactNode }) {
@@ -28,6 +29,7 @@ export default async function PortalLayout({ children }: { children: React.React
       />
       <div className="flex flex-1 flex-col overflow-hidden">
         <PortalHeader
+          notificationsSlot={<NotificationDropdown />}
           avatarSlot={
             <Suspense fallback={<HeaderAvatarSkeleton />}>
               <HeaderAvatar userId={user.id} />
