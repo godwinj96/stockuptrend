@@ -66,7 +66,7 @@ export function CryptoDepositInfo({ accountId, limits }: Props) {
       }
       setDepositedAmount(amount)
       setSucceeded(true)
-      toast.success(`${formatCurrency(amount)} credited to your account`)
+      toast.success('Deposit request submitted — pending admin approval')
       router.refresh()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Something went wrong')
@@ -79,10 +79,10 @@ export function CryptoDepositInfo({ accountId, limits }: Props) {
         <AnimatedCheckmark size={64} />
         <div>
           <p className="font-display text-lg font-semibold text-text-primary">
-            {formatCurrency(depositedAmount)} Deposited
+            Deposit Request Submitted
           </p>
           <p className="mt-1 text-sm text-text-secondary">
-            Funds have been credited to your account. The AI will begin trading shortly.
+            Your deposit of {formatCurrency(depositedAmount)} is pending admin review. You will be notified once it is approved and your balance is credited.
           </p>
         </div>
         <button

@@ -39,7 +39,20 @@ export function LoginForm() {
       return
     }
 
-    router.push(ROUTES.portal.dashboard)
+    const { data: { user: loggedInUser } } = await supabase.auth.getUser()
+    if (loggedInUser) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', loggedInUser.id)
+        .single()
+      const dest = (profile as { role?: string } | null)?.role === 'admin'
+        ? ROUTES.admin.dashboard
+        : ROUTES.portal.dashboard
+      router.push(dest)
+    } else {
+      router.push(ROUTES.portal.dashboard)
+    }
     router.refresh()
   }
 

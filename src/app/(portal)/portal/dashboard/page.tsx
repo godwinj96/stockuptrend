@@ -9,7 +9,7 @@ import { QuickActions } from '@/components/portal/dashboard/QuickActions'
 import { PortfolioMiniChart } from '@/components/portal/dashboard/PortfolioMiniChart'
 import { AIStatusWidget } from '@/components/portal/dashboard/AIStatusWidget'
 import { ROUTES } from '@/lib/constants/routes'
-import type { Account, Transaction, PortfolioSnapshot } from '@/lib/supabase/types'
+import type { Account, Transaction, PortfolioSnapshot, Profile } from '@/lib/supabase/types'
 
 export const metadata: Metadata = {
   title: 'Dashboard',
@@ -56,6 +56,11 @@ export default async function DashboardPage() {
         .eq('account_id', primaryAccount.id)
         .eq('status', 'open')
     : { count: 0 }
+
+  // Redirect admins who somehow land on the portal to the admin dashboard
+  if ((profile as Profile & { role?: string } | null)?.role === 'admin') {
+    redirect(ROUTES.admin.dashboard)
+  }
 
   const accountWithStrategy = primaryAccount as unknown as (Account & { ai_strategies?: { name: string } | null }) | null
   const strategyName = accountWithStrategy?.ai_strategies?.name ?? 'Balanced'
