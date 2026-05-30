@@ -46,13 +46,14 @@ export async function POST(req: NextRequest) {
 
   const reference = `DEMO-${currency}-${Date.now()}`
 
+  // Deposit goes to pending_review — admin must approve before balance is credited
   const { error: txError } = await db.from('transactions').insert({
     user_id: user.id,
     account_id: accountId,
     type: 'deposit',
     amount,
     currency: 'USD',
-    status: 'completed',
+    status: 'pending_review',
     method: `crypto_demo_${currency.toLowerCase()}`,
     reference,
   })
@@ -62,24 +63,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Transaction failed' }, { status: 500 })
   }
 
-  const newBalance = (account.balance ?? 0) + amount
-  const { error: balanceError } = await db
-    .from('accounts')
-    .update({ balance: newBalance })
-    .eq('id', accountId)
-
-  if (balanceError) {
-    console.error('demo-deposit: failed to update balance', balanceError)
-    return NextResponse.json({ error: 'Balance update failed' }, { status: 500 })
-  }
-
   await db.from('notifications').insert({
     user_id: user.id,
     type: 'deposit_confirmed',
-    title: 'Deposit Confirmed',
-    body: `$${amount.toFixed(2)} has been credited to your account via demo ${currency} deposit.`,
+    title: 'Deposit Request Received',
+    body: `Your deposit request of $${amount.toFixed(2)} via ${currency} is pending admin approval. You will be notified once it is processed.`,
     is_read: false,
   })
 
-  return NextResponse.json({ success: true, reference, newBalance })
+  return NextResponse.json({ success: true, reference, status: 'pending_review' })
 }

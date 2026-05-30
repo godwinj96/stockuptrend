@@ -36,4 +36,15 @@ export const ROUTES = {
     ticket: (id: string) => `/portal/support/${id}`,
     settings: '/portal/settings',
   },
+  admin: {
+    dashboard:   '/admin/dashboard',
+    users:       '/admin/users',
+    user:        (id: string) => `/admin/users/${id}`,
+    deposits:    '/admin/deposits',
+    kyc:         '/admin/kyc',
+    kycReview:   (id: string) => `/admin/kyc/${id}`,
+    withdrawals: '/admin/withdrawals',
+    support:     '/admin/support',
+    ticket:      (id: string) => `/admin/support/${id}`,
+  },
 } as const

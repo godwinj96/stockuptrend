@@ -111,6 +111,7 @@ export type Database = {
           doc_type: string
           file_url: string
           id: string
+          rejection_reason: string | null
           reviewed_at: string | null
           status: string | null
           user_id: string
@@ -120,6 +121,7 @@ export type Database = {
           doc_type: string
           file_url: string
           id?: string
+          rejection_reason?: string | null
           reviewed_at?: string | null
           status?: string | null
           user_id: string
@@ -129,6 +131,7 @@ export type Database = {
           doc_type?: string
           file_url?: string
           id?: string
+          rejection_reason?: string | null
           reviewed_at?: string | null
           status?: string | null
           user_id?: string
@@ -176,6 +179,7 @@ export type Database = {
           id: string
           kyc_status: Database["public"]["Enums"]["kyc_status"] | null
           phone: string | null
+          role: 'user' | 'admin' | null
         }
         Insert: {
           account_type?: Database["public"]["Enums"]["account_type"] | null
@@ -187,6 +191,7 @@ export type Database = {
           id: string
           kyc_status?: Database["public"]["Enums"]["kyc_status"] | null
           phone?: string | null
+          role?: 'user' | 'admin' | null
         }
         Update: {
           account_type?: Database["public"]["Enums"]["account_type"] | null
@@ -198,6 +203,7 @@ export type Database = {
           id?: string
           kyc_status?: Database["public"]["Enums"]["kyc_status"] | null
           phone?: string | null
+          role?: 'user' | 'admin' | null
         }
         Relationships: []
       }
@@ -366,6 +372,7 @@ export type Database = {
       transactions: {
         Row: {
           account_id: string
+          admin_note: string | null
           amount: number
           created_at: string | null
           currency: string | null
@@ -378,6 +385,7 @@ export type Database = {
         }
         Insert: {
           account_id: string
+          admin_note?: string | null
           amount: number
           created_at?: string | null
           currency?: string | null
@@ -390,6 +398,7 @@ export type Database = {
         }
         Update: {
           account_id?: string
+          admin_note?: string | null
           amount?: number
           created_at?: string | null
           currency?: string | null
