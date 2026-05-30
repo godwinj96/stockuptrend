@@ -108,16 +108,16 @@ export default function EducationPage() {
         <div className="mx-auto max-w-5xl px-4 text-center">
           <div className="anim-fade-up mb-4 inline-flex items-center gap-2 rounded-full border border-accent-primary/20 bg-accent-primary-muted px-4 py-1.5 text-xs font-medium text-accent-primary">
             <BookOpen className="h-3.5 w-3.5" />
-            Trading Education
+            AI Investor Education
           </div>
           <h1 className="anim-fade-up font-display text-4xl font-bold tracking-tight text-text-primary md:text-5xl" style={{ animationDelay: '60ms' }}>
-            Learn to Trade
+            Understand Your
             <br />
-            <span className="text-accent-primary">Like a Professional</span>
+            <span className="text-accent-primary">AI Investor</span>
           </h1>
           <p className="anim-fade-up mx-auto mt-4 max-w-xl text-base text-text-secondary" style={{ animationDelay: '120ms' }}>
-            Free guides covering everything from forex basics to advanced trading strategies.
-            Build the knowledge base every successful trader needs.
+            The more you understand how markets work, the more confident you&apos;ll feel watching your
+            AI execute. These guides cover the fundamentals — no prior experience required.
           </p>
         </div>
       </section>
@@ -181,17 +181,17 @@ export default function EducationPage() {
         {/* CTA */}
         <div className="anim-fade-up mt-16 rounded-2xl border border-border-subtle bg-bg-surface p-8 text-center">
           <h2 className="font-display text-2xl font-bold text-text-primary">
-            Ready to put your knowledge to work?
+            Ready to activate your AI portfolio?
           </h2>
           <p className="mt-2 text-sm text-text-secondary">
-            Open an account and let the AI start trading on your behalf.
+            Deposit, choose a strategy, and your AI starts working immediately.
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <Link
               href="/auth/register"
               className="rounded-lg bg-accent-primary px-6 py-2.5 text-sm font-semibold text-text-inverse transition-all hover:bg-accent-primary-hover hover:shadow-glow-accent"
             >
-              Open Account
+              Get Started
             </Link>
             <Link
               href="/trading-instruments"

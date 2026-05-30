@@ -38,7 +38,7 @@ export function AIStatusCard({
         body: JSON.stringify({ accountId, aiActive: newActive }),
       })
       if (!res.ok) throw new Error('Failed')
-      toast.success(newActive ? 'AI trading activated' : 'AI trading paused')
+      toast.success(newActive ? 'AI trading resumed' : 'AI trading paused')
     } catch {
       setAiActive(!newActive) // revert
       toast.error('Could not update AI status')
@@ -57,7 +57,7 @@ export function AIStatusCard({
             <Bot className="h-5 w-5 text-accent-primary" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-text-primary">AI Trading Engine</p>
+            <p className="text-sm font-semibold text-text-primary">Your AI Trader</p>
             <p className="text-xs text-text-tertiary">{strategyName} Strategy</p>
           </div>
         </div>
@@ -78,14 +78,14 @@ export function AIStatusCard({
                 transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
               />
             )}
-            {aiActive ? 'ACTIVE' : 'PAUSED'}
+            {aiActive ? 'TRADING' : 'PAUSED'}
           </span>
         </div>
       </div>
 
       <div className="mb-5 grid grid-cols-2 gap-4">
         <div className="rounded-lg bg-bg-elevated p-3">
-          <p className="text-xs text-text-tertiary">Today&apos;s P&amp;L</p>
+          <p className="text-xs text-text-tertiary">Today&apos;s Return</p>
           <p className={cn('mt-1 font-display text-xl font-bold tabular-nums', pnlPositive ? 'text-accent-primary' : 'text-danger')}>
             {pnlPositive ? '+' : ''}{formatCurrency(todayPnL)}
           </p>
@@ -102,7 +102,7 @@ export function AIStatusCard({
           <p className="mt-1 font-display text-xl font-bold tabular-nums text-text-primary">
             {openPositionsCount}
           </p>
-          <p className="mt-0.5 text-xs text-text-tertiary">Active trades</p>
+          <p className="mt-0.5 text-xs text-text-tertiary">Live positions</p>
         </div>
       </div>
 
@@ -118,7 +118,7 @@ export function AIStatusCard({
         )}
       >
         <Power className="h-4 w-4" />
-        {isToggling ? 'Updating…' : aiActive ? 'Pause AI Trading' : 'Activate AI Trading'}
+        {isToggling ? 'Updating…' : aiActive ? 'Pause Trading' : 'Resume Trading'}
       </button>
     </div>
   )

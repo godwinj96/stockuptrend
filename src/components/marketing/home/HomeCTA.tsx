@@ -41,7 +41,7 @@ export function HomeCTA() {
             className="mb-3 inline-flex items-center gap-2 rounded-full border border-accent-primary/20 bg-accent-primary-muted px-4 py-1.5"
           >
             <TrendingUp className="h-3.5 w-3.5 text-accent-primary" />
-            <span className="text-xs font-semibold text-accent-primary">Join 50,000+ Active Traders</span>
+            <span className="text-xs font-semibold text-accent-primary">Join 50,000+ Investors</span>
           </motion.div>
 
           <motion.h2
@@ -50,8 +50,8 @@ export function HomeCTA() {
             transition={{ duration: 0.55, delay: 0.32, ease: [0, 0, 0.2, 1] }}
             className="font-display text-4xl font-bold text-text-primary sm:text-5xl"
           >
-            Ready to Start{' '}
-            <span className="gradient-text">Trading?</span>
+            Let the AI{' '}
+            <span className="gradient-text">Work for You</span>
           </motion.h2>
 
           <motion.p
@@ -60,8 +60,8 @@ export function HomeCTA() {
             transition={{ duration: 0.5, delay: 0.4, ease: [0, 0, 0.2, 1] }}
             className="mx-auto mt-4 max-w-xl text-lg text-text-secondary"
           >
-            Open your account in minutes. Access 200+ instruments with professional tools,
-            tight spreads, and a platform built for serious traders.
+            Create your account, deposit, and choose a strategy. The AI starts trading immediately —
+            no charts to read, no timing the market.
           </motion.p>
 
           <motion.div
@@ -74,14 +74,14 @@ export function HomeCTA() {
               href={ROUTES.auth.register}
               className="inline-flex items-center gap-2 rounded-lg bg-accent-primary px-8 py-3.5 text-sm font-semibold text-text-inverse transition-all duration-200 hover:scale-[1.02] hover:bg-accent-primary-hover hover:shadow-glow-accent active:scale-[0.98]"
             >
-              Open Free Account
+              Get Started Free
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
-              href={ROUTES.instruments}
+              href="#how-it-works"
               className="inline-flex items-center gap-2 rounded-lg border border-border-default px-8 py-3.5 text-sm font-semibold text-text-primary transition-all duration-200 hover:border-border-strong hover:bg-bg-elevated"
             >
-              Explore Instruments
+              Learn How It Works
             </Link>
           </motion.div>
 
@@ -91,7 +91,7 @@ export function HomeCTA() {
             transition={{ duration: 0.4, delay: 0.56 }}
             className="mt-5 text-xs text-text-tertiary"
           >
-            No credit card required · KYC required to trade · CFDs carry risk of loss
+            No trading experience needed · KYC required · Capital at risk
           </motion.p>
         </motion.div>
       </div>

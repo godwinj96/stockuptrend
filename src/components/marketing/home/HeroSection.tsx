@@ -8,9 +8,9 @@ import { ROUTES } from '@/lib/constants/routes'
 import { AnimatedPriceCards } from './AnimatedPriceCards'
 
 const STATS = [
-  { value: 50, suffix: 'K+', label: 'Active Traders' },
+  { value: 50, suffix: 'K+', label: 'Investors' },
   { value: 120, suffix: '+', label: 'Countries' },
-  { value: 200, suffix: '+', label: 'Instruments' },
+  { value: 72, suffix: '%', label: 'Avg Win Rate' },
 ]
 
 function AnimatedStat({ value, suffix, label }: { value: number; suffix: string; label: string }) {
@@ -74,24 +74,23 @@ export function HeroSection() {
             style={{ animationDelay: '0ms' }}
           >
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent-primary" />
-            <span className="text-xs font-medium text-accent-primary">200+ instruments available</span>
+            <span className="text-xs font-medium text-accent-primary">AI-Powered Trading</span>
           </div>
 
           <h1
             className="anim-fade-up font-display text-5xl font-extrabold leading-[1.1] tracking-tight text-text-primary sm:text-6xl lg:text-[4rem]"
             style={{ animationDelay: '80ms' }}
           >
-            Trade the World&apos;s{' '}
-            <span className="gradient-text">Markets.</span>
-            {' '}Smarter.
+            Your Money Works.{' '}
+            <span className="gradient-text">Every Hour.</span>
           </h1>
 
           <p
             className="anim-fade-up mt-6 text-lg leading-relaxed text-text-secondary"
             style={{ animationDelay: '160ms' }}
           >
-            Access forex, crypto, stocks and commodities with tight spreads, powerful execution,
-            and tools designed for serious traders.
+            Deposit once. Our AI executes trades across global markets around the clock —
+            compounding your returns while you focus on everything else.
           </p>
 
           <div
@@ -102,14 +101,14 @@ export function HeroSection() {
               href={ROUTES.auth.register}
               className="group inline-flex items-center gap-2 rounded-lg bg-accent-primary px-6 py-3 text-base font-semibold text-text-inverse transition-all duration-200 hover:scale-[1.02] hover:bg-accent-primary-hover hover:shadow-glow-accent active:scale-[0.98]"
             >
-              Open Account
+              Start Earning
               <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
             </Link>
             <Link
-              href={ROUTES.instruments}
+              href="#how-it-works"
               className="inline-flex items-center gap-2 rounded-lg border border-border-default px-6 py-3 text-base font-semibold text-text-primary transition-all duration-200 hover:border-border-strong hover:bg-bg-elevated"
             >
-              Explore Instruments
+              See How It Works
               <ChevronRight className="h-4 w-4 text-text-secondary" />
             </Link>
           </div>

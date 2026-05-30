@@ -13,12 +13,12 @@ interface StrategySelectorProps {
   accountId: string
 }
 
-const DEFAULT_META = { icon: BarChart2, riskLabel: 'Med Risk', riskClass: 'text-accent-primary bg-accent-primary-muted', monthlyReturn: '8–15%' }
+const DEFAULT_META = { icon: BarChart2, riskLabel: 'Balanced', riskClass: 'text-accent-primary bg-accent-primary-muted', monthlyReturn: '8–15%' }
 
 const STRATEGY_META: Record<string, typeof DEFAULT_META> = {
-  conservative: { icon: Shield,    riskLabel: 'Low Risk',  riskClass: 'text-accent-secondary bg-accent-secondary-muted', monthlyReturn: '3–8%' },
-  balanced:     { icon: BarChart2, riskLabel: 'Med Risk',  riskClass: 'text-accent-primary bg-accent-primary-muted',     monthlyReturn: '8–15%' },
-  aggressive:   { icon: Zap,       riskLabel: 'High Risk', riskClass: 'text-accent-gold bg-accent-gold-muted',           monthlyReturn: '15–30%' },
+  conservative: { icon: Shield,    riskLabel: 'Steady Growth', riskClass: 'text-accent-secondary bg-accent-secondary-muted', monthlyReturn: '3–8%' },
+  balanced:     { icon: BarChart2, riskLabel: 'Balanced',      riskClass: 'text-accent-primary bg-accent-primary-muted',     monthlyReturn: '8–15%' },
+  aggressive:   { icon: Zap,       riskLabel: 'High Growth',   riskClass: 'text-accent-gold bg-accent-gold-muted',           monthlyReturn: '15–30%' },
 }
 
 export function StrategySelector({ strategies, selectedStrategyId: initial, accountId }: StrategySelectorProps) {
@@ -50,8 +50,8 @@ export function StrategySelector({ strategies, selectedStrategyId: initial, acco
   return (
     <div className="rounded-xl border border-border-subtle bg-bg-surface p-6 shadow-card">
       <div className="mb-4">
-        <h3 className="font-display text-sm font-semibold text-text-primary">Trading Strategy</h3>
-        <p className="mt-0.5 text-xs text-text-secondary">Choose how aggressively the AI manages your portfolio.</p>
+        <h3 className="font-display text-sm font-semibold text-text-primary">AI Strategy</h3>
+        <p className="mt-0.5 text-xs text-text-secondary">Your strategy sets the AI&apos;s risk tolerance and position sizing. You can change it at any time.</p>
       </div>
 
       <div className="space-y-3">

@@ -10,9 +10,9 @@ import { HomeCTA } from '@/components/marketing/home/HomeCTA'
 import { TradingViewTicker } from '@/components/charts/TradingViewTicker'
 
 export const metadata: Metadata = {
-  title: 'StockUptrend — Online Trading Platform | Forex, Crypto & CFDs',
+  title: 'StockUptrend — AI-Powered Investing | Automated Portfolio Growth',
   description:
-    'Trade 200+ instruments across forex, cryptocurrencies, stocks and commodities. Tight spreads, powerful execution, and a platform built for serious traders.',
+    'Deposit, choose a strategy, and let our AI trade for you. Automated portfolio management across global markets — no experience required.',
 }
 
 export default function HomePage() {

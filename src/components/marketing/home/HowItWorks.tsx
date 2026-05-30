@@ -11,20 +11,20 @@ const STEPS = [
   {
     number: '01',
     icon: UserPlus,
-    title: 'Create Account',
-    description: 'Register in under 2 minutes with your email. No credit card required to get started.',
+    title: 'Create Your Account',
+    description: 'Register in under two minutes. No trading knowledge required.',
   },
   {
     number: '02',
     icon: ShieldCheck,
-    title: 'Verify & Fund',
-    description: 'Complete identity verification and deposit funds using card, bank transfer, or crypto.',
+    title: 'Deposit Funds',
+    description: 'Complete a quick identity check and deposit. Funds are accepted by card, bank transfer, or crypto.',
   },
   {
     number: '03',
     icon: TrendingUp,
-    title: 'Start Trading',
-    description: 'Access 200+ instruments across global markets with professional tools and real-time data.',
+    title: 'AI Takes Over',
+    description: 'Our AI immediately begins placing trades on your behalf — tracking markets, managing risk, and compounding your returns 24 hours a day.',
   },
 ]
 
@@ -46,7 +46,7 @@ export function HowItWorks() {
               How It Works
             </p>
             <WordRevealHeading
-              text="Start Trading in 3 Steps"
+              text="Three Steps to Automated Returns"
               className="font-display text-3xl font-bold text-text-primary sm:text-4xl"
             />
           </motion.div>
@@ -121,7 +121,7 @@ export function HowItWorks() {
               href={ROUTES.auth.register}
               className="inline-flex items-center gap-2 rounded-lg bg-accent-primary px-6 py-3 text-sm font-semibold text-text-inverse transition-all duration-200 hover:scale-[1.02] hover:bg-accent-primary-hover hover:shadow-glow-accent active:scale-[0.98]"
             >
-              Open Account Now
+              Start Earning Today
               <ArrowRight className="h-4 w-4" />
             </Link>
           </motion.div>

@@ -2,29 +2,29 @@
 
 import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
-import { Gauge, ShieldCheck, Globe2, BarChart3 } from 'lucide-react'
+import { Bot, Clock, BarChart3, SlidersHorizontal } from 'lucide-react'
 import { WordRevealHeading } from '@/components/shared/WordRevealHeading'
 
 const WHY_ITEMS = [
   {
-    icon: Gauge,
-    title: 'Tight Spreads',
-    description: 'Trade EUR/USD from 0.0 pips on Pro accounts. Institutional-grade pricing for retail traders.',
+    icon: Bot,
+    title: 'AI Execution',
+    description: 'Our AI enters and exits positions across 200+ instruments, optimising every trade for maximum risk-adjusted returns.',
+  },
+  {
+    icon: Clock,
+    title: 'Always On',
+    description: 'Markets move at all hours. Your AI does too — monitoring positions and executing trades 24 hours a day, 5 days a week.',
   },
   {
     icon: BarChart3,
-    title: 'Powerful Execution',
-    description: 'Market execution with no requotes. Ultra-low latency connects you to deep liquidity.',
+    title: 'Full Transparency',
+    description: 'Every trade your AI places is visible in your portfolio in real time. You see every entry, every exit, every result.',
   },
   {
-    icon: ShieldCheck,
-    title: 'Funds Protected',
-    description: 'Client funds held in segregated accounts at tier-1 banks. SSL encryption and 2FA on every account.',
-  },
-  {
-    icon: Globe2,
-    title: 'Trade Anywhere',
-    description: 'Full-featured MetaTrader 5 on desktop, web browser, and iOS/Android. Your charts, always with you.',
+    icon: SlidersHorizontal,
+    title: 'Choose Your Strategy',
+    description: 'Conservative, Balanced, or Aggressive — pick the risk profile that fits your goals. The AI handles the rest.',
   },
 ]
 
@@ -46,11 +46,11 @@ export function WhyStockUptrend() {
               Why Us
             </p>
             <WordRevealHeading
-              text="Built for Traders, Not Beginners"
+              text="Institutional-Grade AI. Zero Effort."
               className="font-display text-3xl font-bold text-text-primary sm:text-4xl"
             />
             <p className="mx-auto mt-3 max-w-lg text-text-secondary">
-              Every feature, every decision — engineered to give you an edge in the market.
+              Everything that used to require years of experience — automated, optimised, and working for you.
             </p>
           </motion.div>
 

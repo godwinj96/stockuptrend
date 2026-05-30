@@ -49,8 +49,8 @@ function TiltAccountCard({ tier, i, isInView }: {
           {tier.name}
         </h3>
         <p className="mt-1">
+          <span className="ml-1 text-sm text-text-secondary">From</span>
           <span className="font-display text-3xl font-bold text-text-primary">{tier.minDeposit}</span>
-          <span className="ml-1 text-sm text-text-secondary">min deposit</span>
         </p>
       </div>
 
@@ -87,7 +87,7 @@ function TiltAccountCard({ tier, i, isInView }: {
             : 'border border-border-default text-text-primary hover:bg-bg-elevated'
         )}
       >
-        Get Started
+        Activate This Strategy
         <ArrowRight className="h-4 w-4" />
       </Link>
     </motion.div>
@@ -112,11 +112,11 @@ export function AccountTypesTease() {
               Accounts
             </p>
             <WordRevealHeading
-              text="Choose Your Trading Account"
+              text="Choose Your AI Strategy"
               className="font-display text-3xl font-bold text-text-primary sm:text-4xl"
             />
             <p className="mt-3 max-w-lg text-text-secondary">
-              From your first trade to high-volume strategies — an account type for every level.
+              Three risk profiles. Each managed by the same proven AI. Pick the one that matches your goals.
             </p>
           </motion.div>
 

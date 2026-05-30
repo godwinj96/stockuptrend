@@ -7,36 +7,36 @@ import { ROUTES } from '@/lib/constants/routes'
 export const metadata: Metadata = {
   title: 'About StockUptrend | Who We Are',
   description:
-    'Learn about StockUptrend — our mission, values, and commitment to giving retail traders access to institutional-grade tools and pricing.',
+    'StockUptrend automates investing with institutional-grade AI. Learn about our mission and how we built hands-free portfolio growth for everyone.',
 }
 
 const STATS = [
-  { value: '50,000+', label: 'Active Traders' },
+  { value: '50,000+', label: 'Investors' },
   { value: '120+', label: 'Countries Served' },
-  { value: '200+', label: 'Instruments' },
-  { value: '24/5', label: 'Market Hours' },
+  { value: '72%', label: 'Avg Win Rate' },
+  { value: '24/5', label: 'AI Trading Hours' },
 ]
 
 const VALUES = [
   {
     icon: ShieldCheck,
     title: 'Transparency',
-    body: 'No hidden fees, no confusing terms. You always know exactly what you pay and why. Our pricing is published openly.',
+    body: 'Every trade your AI places is logged in real time. No hidden activity, no opaque fees. You see exactly where your money goes.',
   },
   {
     icon: Users,
-    title: 'Trader-First',
-    body: 'Every product decision is driven by one question: does this make our traders more profitable or more efficient? We build for the trader, not the institution.',
+    title: 'Investor-First',
+    body: 'Every product decision starts with one question: does this improve outcomes for our investors? We build for the portfolio, not the platform.',
   },
   {
     icon: Globe2,
     title: 'Global Access',
-    body: "Markets shouldn't have borders. We serve traders across 120+ countries with localized support and accessible funding methods.",
+    body: "The best AI investing tools should not be reserved for one geography. We serve investors across 120+ countries with accessible funding methods.",
   },
   {
     icon: TrendingUp,
     title: 'Execution Quality',
-    body: 'Speed and accuracy matter when markets move fast. We invest heavily in infrastructure to ensure your orders are filled at the price you expect.',
+    body: 'Our AI executes with speed and precision — entering and exiting positions at optimal prices, around the clock, without emotion.',
   },
 ]
 
@@ -56,12 +56,12 @@ export default function AboutPage() {
               Our Story
             </p>
             <h1 className="font-display text-4xl font-bold text-text-primary sm:text-5xl">
-              Built by Traders, <br />for Traders
+              Investing, <br />Automated
             </h1>
             <p className="mt-5 text-lg leading-relaxed text-text-secondary">
-              StockUptrend was founded on a simple frustration: the best trading infrastructure was
-              locked behind institutional doors. We set out to change that — and to build the
-              platform we always wanted to trade on ourselves.
+              StockUptrend was built on a straightforward idea: the most powerful trading technology
+              should not be reserved for hedge funds and proprietary desks. We built the infrastructure.
+              We automated the execution. We opened it to everyone.
             </p>
           </div>
         </div>
@@ -90,17 +90,16 @@ export default function AboutPage() {
                 Mission
               </p>
               <h2 className="font-display text-3xl font-bold text-text-primary">
-                Democratising Access to Global Markets
+                Markets Move 24 Hours. So Does Your AI.
               </h2>
               <p className="mt-4 leading-relaxed text-text-secondary">
-                The global financial markets move trillions of dollars daily, yet the average retail
-                trader is working with inferior tools, wider spreads, and less reliable execution
-                than the professionals on the other side of their trade.
+                Institutional desks run automated strategies around the clock. Individual investors
+                historically could not. We changed that — by building and deploying the same category
+                of AI-driven execution technology, accessible from any account size.
               </p>
               <p className="mt-4 leading-relaxed text-text-secondary">
-                Our mission is to close that gap. By investing in institutional-grade infrastructure
-                and offering it to retail clients at accessible price points, we put the best tools
-                in the hands of the people who need them most.
+                The result is a platform where you deposit, select a risk strategy, and the AI does
+                the rest — entering positions, managing risk, and compounding returns continuously.
               </p>
             </div>
             <div>
@@ -108,16 +107,16 @@ export default function AboutPage() {
                 Our Approach
               </p>
               <h2 className="font-display text-3xl font-bold text-text-primary">
-                Infrastructure Over Marketing
+                Performance Over Promises
               </h2>
               <p className="mt-4 leading-relaxed text-text-secondary">
-                We don&apos;t spend heavily on bonuses and promotions designed to attract and then
-                drain trader accounts. Instead, every dollar we reinvest goes into tighter spreads,
-                faster execution, and a better product.
+                We do not compete on signup bonuses or promotional gimmicks. Every resource we
+                reinvest goes into the AI engine — tighter execution, more instruments, better
+                risk management.
               </p>
               <p className="mt-4 leading-relaxed text-text-secondary">
-                We believe the best traders will find the best platform through word of mouth and
-                results — not advertising. That belief keeps us honest.
+                Our investors stay because results compound. That keeps us focused on the one thing
+                that matters: performance.
               </p>
             </div>
           </div>
@@ -155,17 +154,17 @@ export default function AboutPage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="rounded-2xl border border-accent-primary/20 bg-gradient-to-br from-accent-primary/5 to-bg-surface p-10 text-center">
             <h2 className="font-display text-3xl font-bold text-text-primary">
-              Ready to Trade with Us?
+              Ready to Put Your Capital to Work?
             </h2>
             <p className="mx-auto mt-3 max-w-lg text-text-secondary">
-              Join thousands of traders who chose StockUptrend for better execution, tighter
-              spreads, and a platform that grows with them.
+              Join thousands of investors who chose StockUptrend for hands-free portfolio growth.
+              Deposit once. The AI works continuously.
             </p>
             <Link
               href={ROUTES.auth.register}
               className="mt-6 inline-flex items-center gap-2 rounded-lg bg-accent-primary px-8 py-3 text-sm font-semibold text-text-inverse transition-all duration-200 hover:bg-accent-primary-hover hover:shadow-glow-accent"
             >
-              Open Your Account
+              Start Earning
               <ArrowRight className="h-4 w-4" />
             </Link>
           </div>

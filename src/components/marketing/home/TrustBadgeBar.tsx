@@ -5,12 +5,12 @@ import { motion, useInView } from 'framer-motion'
 import { Shield, Lock, Users, Headphones, Zap, Vault } from 'lucide-react'
 
 const TRUST_ITEMS = [
-  { icon: Shield, label: 'Regulated Broker' },
-  { icon: Lock, label: 'SSL Secured' },
-  { icon: Users, label: '50,000+ Traders' },
+  { icon: Shield, label: 'Regulated & Compliant' },
+  { icon: Lock, label: '256-bit Encryption' },
+  { icon: Users, label: '50,000+ Investors' },
   { icon: Headphones, label: '24/7 Support' },
-  { icon: Zap, label: 'Instant Deposits' },
-  { icon: Vault, label: 'Segregated Funds' },
+  { icon: Zap, label: 'Deposits Accepted Daily' },
+  { icon: Vault, label: 'Segregated Client Funds' },
 ]
 
 export function TrustBadgeBar() {

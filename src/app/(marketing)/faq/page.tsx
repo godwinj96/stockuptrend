@@ -26,8 +26,8 @@ const FAQ_SECTIONS = [
         a: 'Most accounts are verified within 1 business day. Complex cases may take up to 3 business days. You will receive email notifications at each stage.',
       },
       {
-        q: 'Can I trade before completing KYC?',
-        a: 'You can deposit up to $500 before KYC is approved. However, trading and withdrawals require full KYC approval. We recommend completing verification immediately after registration.',
+        q: 'Can the AI start trading before KYC is complete?',
+        a: 'You can deposit up to $500 before KYC approval, but the AI will only begin trading once your identity is verified. We recommend completing verification immediately after your first deposit.',
       },
     ],
   },
@@ -48,7 +48,7 @@ const FAQ_SECTIONS = [
       },
       {
         q: 'What platform do you use?',
-        a: 'We provide access to MetaTrader 5 (MT5) for desktop and mobile. Our web platform is also available directly in your browser with no download required.',
+        a: 'StockUptrend uses a proprietary AI trading engine that executes positions automatically on your behalf. You manage your portfolio through the web dashboard — no trading software to install.',
       },
     ],
   },
@@ -61,7 +61,7 @@ const FAQ_SECTIONS = [
       },
       {
         q: 'How long do deposits take?',
-        a: 'Card deposits are instant. Bank transfers typically take 1–3 business days. Crypto deposits are processed after network confirmations (usually within 30 minutes for USDT TRC-20).',
+        a: 'Deposits are reviewed and approved by our team, typically within 24 hours on business days. Once approved, funds are credited to your account and the AI begins trading immediately.',
       },
       {
         q: 'How do I withdraw funds?',

@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
-import { Loader2, Info } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { AnimatedCheckmark } from '@/components/shared/AnimatedCheckmark'
 import { formatCurrency } from '@/lib/utils/format'
 
@@ -98,15 +98,6 @@ export function CryptoDepositInfo({ accountId, limits }: Props) {
 
   return (
     <div className="space-y-5">
-      {/* Demo mode badge */}
-      <div className="flex items-center gap-2 rounded-lg border border-warning/20 bg-warning/5 px-4 py-2.5">
-        <Info className="h-3.5 w-3.5 shrink-0 text-warning" />
-        <span className="text-xs text-warning">
-          <span className="font-semibold">DEMO MODE</span> — No real funds are transferred. This
-          is a simulated deposit for demonstration purposes only.
-        </span>
-      </div>
-
       {/* Currency selector */}
       <div>
         <label className="mb-2 block text-sm font-medium text-text-primary">Select Currency</label>
@@ -179,13 +170,13 @@ export function CryptoDepositInfo({ accountId, limits }: Props) {
               Processing…
             </>
           ) : (
-            `Simulate ${selectedCurrency} Deposit`
+            `Deposit with ${selectedCurrency}`
           )}
         </button>
       </form>
 
       <p className="text-xs text-text-tertiary">
-        Min: ${limits.min} · Max: ${limits.max.toLocaleString()} · Credited instantly
+        Min: ${limits.min} · Max: ${limits.max.toLocaleString()} · Deposits typically reviewed within 24 hours
       </p>
     </div>
   )
