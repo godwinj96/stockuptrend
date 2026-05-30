@@ -44,12 +44,29 @@ function DepositRow({ deposit, onAction }: { deposit: Deposit; onAction: () => v
   const [expanded, setExpanded] = useState(false)
   const [reason, setReason] = useState('')
   const [isPending, startTransition] = useTransition()
+  // Optimistic status — immediately reflects action without waiting for router.refresh()
+  const [optimisticStatus, setOptimisticStatus] = useState<string | null>(null)
+
+  const resolvedStatus = optimisticStatus ?? deposit.status
 
   function approve() {
     startTransition(async () => {
       const res = await fetch(`/api/admin/deposits/${deposit.id}/approve`, { method: 'PATCH' })
-      if (res.ok) { toast.success('Deposit approved'); onAction() }
-      else toast.error('Failed to approve deposit')
+      if (res.ok) {
+        setOptimisticStatus('completed')
+        toast.success('Deposit approved — balance credited')
+        onAction()
+      } else {
+        const data = await res.json().catch(() => ({})) as { error?: string }
+        // 400 means it was already processed (e.g. double-click)
+        if (res.status === 400) {
+          setOptimisticStatus('completed')
+          toast.info('Deposit was already processed')
+          onAction()
+        } else {
+          toast.error(data.error ?? 'Failed to approve deposit')
+        }
+      }
     })
   }
 
@@ -61,12 +78,18 @@ function DepositRow({ deposit, onAction }: { deposit: Deposit; onAction: () => v
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ reason }),
       })
-      if (res.ok) { toast.success('Deposit rejected'); setExpanded(false); onAction() }
-      else toast.error('Failed to reject deposit')
+      if (res.ok) {
+        setOptimisticStatus('failed')
+        setExpanded(false)
+        toast.success('Deposit rejected')
+        onAction()
+      } else {
+        toast.error('Failed to reject deposit')
+      }
     })
   }
 
-  const isPending_ = deposit.status === 'pending_review'
+  const isPending_ = resolvedStatus === 'pending_review'
 
   return (
     <>
@@ -84,8 +107,8 @@ function DepositRow({ deposit, onAction }: { deposit: Deposit; onAction: () => v
         <td className="px-4 py-3 font-mono text-xs text-text-tertiary">{deposit.reference?.slice(0, 20) ?? '—'}</td>
         <td className="px-4 py-3 text-xs text-text-tertiary">{deposit.created_at ? formatDateTime(deposit.created_at) : '—'}</td>
         <td className="px-4 py-3">
-          <span className={cn('rounded-full px-2.5 py-0.5 text-xs font-semibold', STATUS_STYLES[deposit.status ?? ''] ?? 'bg-bg-elevated text-text-tertiary')}>
-            {STATUS_LABELS[deposit.status ?? ''] ?? deposit.status}
+          <span className={cn('rounded-full px-2.5 py-0.5 text-xs font-semibold', STATUS_STYLES[resolvedStatus ?? ''] ?? 'bg-bg-elevated text-text-tertiary')}>
+            {STATUS_LABELS[resolvedStatus ?? ''] ?? resolvedStatus}
           </span>
         </td>
         <td className="px-4 py-3">

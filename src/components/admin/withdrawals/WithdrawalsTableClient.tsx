@@ -42,12 +42,23 @@ function WithdrawalRow({ w, onAction }: { w: Withdrawal; onAction: () => void })
   const [expanded, setExpanded] = useState(false)
   const [reason, setReason] = useState('')
   const [isPending, startTransition] = useTransition()
+  const [optimisticStatus, setOptimisticStatus] = useState<string | null>(null)
+  const resolvedStatus = optimisticStatus ?? w.status
 
   function approve() {
     startTransition(async () => {
       const res = await fetch(`/api/admin/withdrawals/${w.id}/approve`, { method: 'PATCH' })
-      if (res.ok) { toast.success('Withdrawal approved'); onAction() }
-      else toast.error('Failed to approve')
+      if (res.ok) {
+        setOptimisticStatus('completed')
+        toast.success('Withdrawal approved')
+        onAction()
+      } else if (res.status === 400) {
+        setOptimisticStatus('completed')
+        toast.info('Withdrawal was already processed')
+        onAction()
+      } else {
+        toast.error('Failed to approve withdrawal')
+      }
     })
   }
 
@@ -59,12 +70,18 @@ function WithdrawalRow({ w, onAction }: { w: Withdrawal; onAction: () => void })
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ reason }),
       })
-      if (res.ok) { toast.success('Withdrawal rejected — balance refunded'); setExpanded(false); onAction() }
-      else toast.error('Failed to reject')
+      if (res.ok) {
+        setOptimisticStatus('failed')
+        setExpanded(false)
+        toast.success('Withdrawal rejected — balance refunded')
+        onAction()
+      } else {
+        toast.error('Failed to reject withdrawal')
+      }
     })
   }
 
-  const isPendingStatus = w.status === 'pending_review'
+  const isPendingStatus = resolvedStatus === 'pending_review'
 
   return (
     <>
@@ -77,8 +94,8 @@ function WithdrawalRow({ w, onAction }: { w: Withdrawal; onAction: () => void })
         <td className="px-4 py-3 text-xs text-text-secondary">{w.method ?? '—'}</td>
         <td className="px-4 py-3 text-xs text-text-tertiary">{w.created_at ? formatDateTime(w.created_at) : '—'}</td>
         <td className="px-4 py-3">
-          <span className={cn('rounded-full px-2.5 py-0.5 text-xs font-semibold', STATUS_STYLES[w.status ?? ''] ?? 'bg-bg-elevated text-text-tertiary')}>
-            {STATUS_LABELS[w.status ?? ''] ?? w.status}
+          <span className={cn('rounded-full px-2.5 py-0.5 text-xs font-semibold', STATUS_STYLES[resolvedStatus ?? ''] ?? 'bg-bg-elevated text-text-tertiary')}>
+            {STATUS_LABELS[resolvedStatus ?? ''] ?? resolvedStatus}
           </span>
         </td>
         <td className="px-4 py-3">
