@@ -23,6 +23,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/admin/kyc':         'KYC Review',
   '/admin/withdrawals': 'Withdrawals',
   '/admin/support':     'Support Tickets',
+  '/admin/settings':    'Settings',
 }
 
 export function AdminHeader({ adminName, adminEmail }: AdminHeaderProps) {

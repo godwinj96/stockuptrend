@@ -14,6 +14,7 @@ interface DepositFormProps {
   accountNumber: string
   currency: string
   userId: string
+  depositSettings: Record<string, string>
 }
 
 type PaymentMethod = 'card' | 'bank' | 'crypto'
@@ -24,8 +25,23 @@ const METHODS: Array<{ id: PaymentMethod; label: string; icon: React.ComponentTy
   { id: 'crypto', label: 'Cryptocurrency', icon: Bitcoin, detail: '~30 min · $10–$50,000' },
 ]
 
-export function DepositForm({ accountId, accountNumber, currency, userId }: DepositFormProps) {
+export function DepositForm({ accountId, accountNumber, currency, userId, depositSettings }: DepositFormProps) {
   const [method, setMethod] = useState<PaymentMethod>('card')
+
+  const bankDetails = {
+    bankName:    depositSettings.bank_name          ?? '',
+    accountName: depositSettings.bank_account_name  ?? '',
+    sortCode:    depositSettings.bank_sort_code      ?? '',
+    iban:        depositSettings.bank_iban           ?? '',
+    swiftBic:    depositSettings.bank_swift          ?? '',
+  }
+
+  const walletAddresses = {
+    BTC:  depositSettings.crypto_btc_address  ?? '',
+    ETH:  depositSettings.crypto_eth_address  ?? '',
+    BNB:  depositSettings.crypto_bnb_address  ?? '',
+    USDT: depositSettings.crypto_usdt_address ?? '',
+  } as Record<'BTC' | 'ETH' | 'BNB' | 'USDT', string>
 
   return (
     <div className="rounded-2xl border border-border-subtle bg-bg-surface p-6">
@@ -79,6 +95,7 @@ export function DepositForm({ accountId, accountNumber, currency, userId }: Depo
           accountNumber={accountNumber}
           currency={currency}
           limits={PAYMENT_LIMITS.deposit.bank_transfer}
+          bankDetails={bankDetails}
         />
       )}
       {method === 'crypto' && (
@@ -86,6 +103,7 @@ export function DepositForm({ accountId, accountNumber, currency, userId }: Depo
           userId={userId}
           accountId={accountId}
           limits={PAYMENT_LIMITS.deposit.crypto_coinbase}
+          walletAddresses={walletAddresses}
         />
       )}
     </div>

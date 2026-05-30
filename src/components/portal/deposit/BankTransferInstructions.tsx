@@ -1,26 +1,27 @@
 import { CopyButton } from '@/components/shared/CopyButton'
 
+interface BankDetails {
+  bankName: string
+  accountName: string
+  sortCode: string
+  iban: string
+  swiftBic: string
+}
+
 interface Props {
   accountNumber: string
   currency?: string
   limits: { min: number; max: number }
+  bankDetails: BankDetails
 }
 
-const BANK_DETAILS = {
-  bankName: 'Barclays Bank PLC',
-  accountName: 'StockUptrend Ltd Client Funds',
-  sortCode: '20-00-00',
-  iban: 'GB29NWBK60161331926819',
-  swiftBic: 'BARCGB22',
-}
-
-export function BankTransferInstructions({ accountNumber, limits }: Props) {
+export function BankTransferInstructions({ accountNumber, limits, bankDetails }: Props) {
   const rows = [
-    { label: 'Bank Name', value: BANK_DETAILS.bankName },
-    { label: 'Account Name', value: BANK_DETAILS.accountName },
-    { label: 'Sort Code', value: BANK_DETAILS.sortCode },
-    { label: 'IBAN', value: BANK_DETAILS.iban },
-    { label: 'SWIFT/BIC', value: BANK_DETAILS.swiftBic },
+    { label: 'Bank Name',            value: bankDetails.bankName },
+    { label: 'Account Name',         value: bankDetails.accountName },
+    { label: 'Sort Code',            value: bankDetails.sortCode },
+    { label: 'IBAN',                 value: bankDetails.iban },
+    { label: 'SWIFT/BIC',           value: bankDetails.swiftBic },
     { label: 'Reference (required)', value: accountNumber, important: true },
   ]
 
@@ -39,9 +40,9 @@ export function BankTransferInstructions({ accountNumber, limits }: Props) {
               <span
                 className={`font-mono text-sm font-medium ${row.important ? 'text-accent-primary' : 'text-text-primary'}`}
               >
-                {row.value}
+                {row.value || '—'}
               </span>
-              <CopyButton text={row.value} />
+              {row.value && <CopyButton text={row.value} />}
             </div>
           </div>
         ))}

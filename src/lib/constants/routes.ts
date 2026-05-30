@@ -46,5 +46,6 @@ export const ROUTES = {
     withdrawals: '/admin/withdrawals',
     support:     '/admin/support',
     ticket:      (id: string) => `/admin/support/${id}`,
+    settings:    '/admin/settings',
   },
 } as const

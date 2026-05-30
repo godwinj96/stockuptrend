@@ -6,14 +6,16 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
-import { Loader2 } from 'lucide-react'
+import { Loader2, AlertCircle } from 'lucide-react'
 import { AnimatedCheckmark } from '@/components/shared/AnimatedCheckmark'
+import { CopyButton } from '@/components/shared/CopyButton'
 import { formatCurrency } from '@/lib/utils/format'
 
 interface Props {
   userId: string
   accountId: string
   limits: { min: number; max: number }
+  walletAddresses: Record<'BTC' | 'ETH' | 'BNB' | 'USDT', string>
 }
 
 type CryptoCurrency = 'BTC' | 'ETH' | 'BNB' | 'USDT'
@@ -37,7 +39,7 @@ const schema = z.object({
 
 type FormValues = z.input<typeof schema>
 
-export function CryptoDepositInfo({ accountId, limits }: Props) {
+export function CryptoDepositInfo({ accountId, limits, walletAddresses }: Props) {
   const router = useRouter()
   const [selectedCurrency, setSelectedCurrency] = useState<CryptoCurrency>('USDT')
   const [succeeded, setSucceeded] = useState(false)
@@ -51,6 +53,9 @@ export function CryptoDepositInfo({ accountId, limits }: Props) {
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
   })
+
+  const currentAddress = walletAddresses[selectedCurrency] ?? ''
+  const currentCurrency = CURRENCIES.find((c) => c.id === selectedCurrency)!
 
   async function onSubmit(values: FormValues) {
     const amount = Number(values.amount)
@@ -75,16 +80,38 @@ export function CryptoDepositInfo({ accountId, limits }: Props) {
 
   if (succeeded) {
     return (
-      <div className="flex flex-col items-center gap-4 py-8 text-center">
+      <div className="flex flex-col items-center gap-4 py-6 text-center">
         <AnimatedCheckmark size={64} />
         <div>
           <p className="font-display text-lg font-semibold text-text-primary">
             Deposit Request Submitted
           </p>
           <p className="mt-1 text-sm text-text-secondary">
-            Your deposit of {formatCurrency(depositedAmount)} is pending admin review. You will be notified once it is approved and your balance is credited.
+            Send exactly <span className="font-semibold text-text-primary">{formatCurrency(depositedAmount)}</span> worth
+            of {selectedCurrency} to the address below. Your deposit will be credited once our team confirms receipt.
           </p>
         </div>
+
+        {currentAddress ? (
+          <div className="w-full rounded-xl border border-accent-primary/20 bg-accent-primary-muted p-4">
+            <p className="mb-2 text-xs font-medium text-text-secondary">
+              {currentCurrency.label} ({currentCurrency.network}) Address
+            </p>
+            <div className="flex items-center justify-between gap-3 rounded-lg border border-border-subtle bg-bg-base px-3 py-2.5">
+              <span className="break-all font-mono text-xs text-text-primary">{currentAddress}</span>
+              <CopyButton text={currentAddress} />
+            </div>
+            <p className="mt-2 text-xs text-text-tertiary">
+              Send only {selectedCurrency} on the {currentCurrency.network} network to this address.
+            </p>
+          </div>
+        ) : (
+          <div className="flex items-start gap-2 rounded-lg border border-warning/20 bg-warning/5 px-4 py-3 text-sm text-warning">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>Wallet address not configured. Please contact support for payment instructions.</span>
+          </div>
+        )}
+
         <button
           type="button"
           onClick={() => setSucceeded(false)}
@@ -119,6 +146,27 @@ export function CryptoDepositInfo({ accountId, limits }: Props) {
           ))}
         </div>
       </div>
+
+      {/* Wallet address display */}
+      {currentAddress ? (
+        <div className="rounded-xl border border-border-subtle bg-bg-elevated p-4">
+          <p className="mb-2 text-xs font-medium text-text-secondary">
+            Send {currentCurrency.label} to this address ({currentCurrency.network})
+          </p>
+          <div className="flex items-center justify-between gap-3 rounded-lg border border-border-subtle bg-bg-base px-3 py-2.5">
+            <span className="break-all font-mono text-xs text-text-primary">{currentAddress}</span>
+            <CopyButton text={currentAddress} />
+          </div>
+          <p className="mt-2 text-xs text-text-tertiary">
+            Only send {selectedCurrency} on the {currentCurrency.network} network. Other assets will be lost.
+          </p>
+        </div>
+      ) : (
+        <div className="flex items-start gap-2 rounded-lg border border-border-subtle bg-bg-elevated px-4 py-3 text-sm text-text-tertiary">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-text-tertiary" />
+          <span>Wallet address not configured for {currentCurrency.label}. Contact support.</span>
+        </div>
+      )}
 
       {/* Amount input */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

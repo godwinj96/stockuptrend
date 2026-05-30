@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, Users, ArrowDownToLine, ShieldCheck,
-  ArrowUpFromLine, MessageSquare, ChevronLeft, ChevronRight, LogOut,
+  ArrowUpFromLine, MessageSquare, ChevronLeft, ChevronRight, LogOut, Settings2,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils/cn'
@@ -32,6 +32,7 @@ export function AdminSidebar({ pendingDeposits, pendingKyc, pendingWithdrawals, 
     { label: 'KYC Review',   href: ROUTES.admin.kyc,         icon: ShieldCheck,     badge: pendingKyc },
     { label: 'Withdrawals',  href: ROUTES.admin.withdrawals, icon: ArrowUpFromLine, badge: pendingWithdrawals },
     { label: 'Support',      href: ROUTES.admin.support,     icon: MessageSquare,   badge: openTickets },
+    { label: 'Settings',     href: ROUTES.admin.settings,    icon: Settings2,       badge: 0 },
   ]
 
   async function handleSignOut() {

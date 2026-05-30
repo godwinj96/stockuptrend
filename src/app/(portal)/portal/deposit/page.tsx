@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { createServerClient } from '@/lib/supabase/server'
+import { createServerClient, createServiceRoleClient } from '@/lib/supabase/server'
 import { DepositForm } from '@/components/portal/deposit/DepositForm'
 import type { Account } from '@/lib/supabase/types'
 
@@ -13,13 +13,26 @@ export default async function DepositPage() {
     data: { user },
   } = await supabase.auth.getUser()
 
-  const { data: rawAccount } = await supabase
-    .from('accounts')
-    .select('id, balance, currency, account_type, account_number')
-    .eq('user_id', user!.id)
-    .eq('is_active', true)
-    .single()
+  const service = createServiceRoleClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const db = service as any
+
+  const [{ data: rawAccount }, { data: settingsRows }] = await Promise.all([
+    supabase
+      .from('accounts')
+      .select('id, balance, currency, account_type, account_number')
+      .eq('user_id', user!.id)
+      .eq('is_active', true)
+      .single(),
+    db.from('deposit_settings').select('key, value'),
+  ])
+
   const account = rawAccount as Pick<Account, 'id' | 'balance' | 'currency' | 'account_type' | 'account_number'> | null
+
+  const depositSettings: Record<string, string> = {}
+  for (const row of (settingsRows ?? []) as { key: string; value: string }[]) {
+    depositSettings[row.key] = row.value
+  }
 
   return (
     <div className="mx-auto max-w-2xl py-8">
@@ -35,6 +48,7 @@ export default async function DepositPage() {
           accountNumber={account?.account_number ?? ''}
           currency={account?.currency ?? 'USD'}
           userId={user!.id}
+          depositSettings={depositSettings}
         />
       </div>
     </div>
