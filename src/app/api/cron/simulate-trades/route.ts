@@ -24,13 +24,7 @@ interface AccountRow {
   ai_strategies: StrategyConfig | null
 }
 
-export async function GET(req: NextRequest) {
-  const authHeader = req.headers.get('authorization')
-  const token = authHeader?.replace('Bearer ', '').trim()
-  const expected = process.env.TRADE_SIM_TOKEN?.trim()
-  if (!expected || token !== expected) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+export async function GET(_req: NextRequest) {
 
   const serviceSupabase = createServiceRoleClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -13,9 +13,7 @@ jobs:
       - name: Trigger trade simulation
         run: |
           echo "Calling simulation endpoint..."
-          response=$(curl -s -w "\n%{http_code}" \
-            -X GET \
-            -H "Authorization: Bearer ${{ secrets.TRADE_SIM_TOKEN }}" \
+          response=$(curl -s -w "\n%{http_code}" -X GET \
             https://stockuptrend.vercel.app/api/cron/simulate-trades)
           body=$(echo "$response" | head -n -1)
           status=$(echo "$response" | tail -n 1)
