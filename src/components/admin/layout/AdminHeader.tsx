@@ -1,7 +1,8 @@
 'use client'
 
+import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Menu, LogOut } from 'lucide-react'
+import { Menu, LogOut, LayoutDashboard } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -78,7 +79,13 @@ export function AdminHeader({ adminName, adminEmail }: AdminHeaderProps) {
             <p className="text-xs font-medium text-text-primary truncate">{adminName}</p>
             <p className="text-[11px] text-text-tertiary truncate">{adminEmail}</p>
           </div>
-          <DropdownMenuItem onClick={handleSignOut} className="text-danger focus:text-danger mt-1">
+          <DropdownMenuItem asChild>
+            <Link href={`${ROUTES.portal.dashboard}?preview=1`} className="flex items-center">
+              <LayoutDashboard className="mr-2 h-4 w-4" />
+              My Dashboard
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={handleSignOut} className="text-danger focus:text-danger">
             <LogOut className="mr-2 h-4 w-4" />
             Sign Out
           </DropdownMenuItem>

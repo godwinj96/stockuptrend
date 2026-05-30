@@ -16,7 +16,11 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 }
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: { preview?: string }
+}) {
   const user = await getServerUser()
   if (!user) redirect(ROUTES.auth.login)
 
@@ -57,8 +61,9 @@ export default async function DashboardPage() {
         .eq('status', 'open')
     : { count: 0 }
 
-  // Redirect admins who somehow land on the portal to the admin dashboard
-  if ((profile as Profile & { role?: string } | null)?.role === 'admin') {
+  // Redirect admins who accidentally land on the portal — unless they came here intentionally via ?preview=1
+  const isAdmin = (profile as Profile & { role?: string } | null)?.role === 'admin'
+  if (isAdmin && searchParams.preview !== '1') {
     redirect(ROUTES.admin.dashboard)
   }
 
