@@ -10,6 +10,7 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { createBrowserClient } from '@/lib/supabase/client'
 import { ROUTES } from '@/lib/constants/routes'
+import { useUIStore } from '@/lib/store/index'
 
 interface AdminHeaderProps {
   adminName: string
@@ -30,6 +31,7 @@ export function AdminHeader({ adminName, adminEmail }: AdminHeaderProps) {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createBrowserClient()
+  const { toggleMobileSidebar } = useUIStore()
 
   const pageTitle =
     Object.entries(PAGE_TITLES).find(([path]) => pathname.startsWith(path))?.[1] ?? 'Admin'
@@ -49,6 +51,7 @@ export function AdminHeader({ adminName, adminEmail }: AdminHeaderProps) {
     <header className="flex h-14 shrink-0 items-center justify-between border-b border-border-subtle bg-bg-surface px-4 md:px-6">
       <div className="flex items-center gap-3">
         <button
+          onClick={toggleMobileSidebar}
           className="flex h-8 w-8 items-center justify-center rounded-lg text-text-secondary transition-colors hover:bg-bg-elevated hover:text-text-primary lg:hidden"
           aria-label="Open navigation"
         >
