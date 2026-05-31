@@ -3,7 +3,6 @@
 import { useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { AnimatePresence, motion } from 'framer-motion'
 import {
   LayoutDashboard, Users, ArrowDownToLine, ShieldCheck,
   ArrowUpFromLine, MessageSquare, ChevronLeft, ChevronRight, LogOut, Settings2, X,
@@ -59,98 +58,89 @@ export function AdminSidebar({ pendingDeposits, pendingKyc, pendingWithdrawals, 
     router.refresh()
   }
 
-  const navLinks = (onClick?: () => void) =>
-    NAV_ITEMS.map((item) => {
-      const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
-      return (
-        <li key={item.href}>
-          <Link
-            href={item.href}
-            onClick={onClick}
-            className={cn(
-              'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150',
-              isActive
-                ? 'border-l-2 border-accent-primary bg-accent-primary-muted text-accent-primary'
-                : 'text-text-secondary hover:bg-bg-elevated hover:text-text-primary',
-            )}
-          >
-            <item.icon className="h-4 w-4 shrink-0" />
-            <span className="flex-1">{item.label}</span>
-            {item.badge > 0 && (
-              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-accent-primary px-1.5 text-[10px] font-bold text-text-inverse">
-                {item.badge > 99 ? '99+' : item.badge}
-              </span>
-            )}
-          </Link>
-        </li>
-      )
-    })
-
   return (
     <>
-      {/* ── Mobile drawer ── */}
-      <AnimatePresence>
-        {mobileSidebarOpen && (
-          <>
-            {/* Backdrop */}
-            <motion.div
-              className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
+      {/* ── Mobile drawer (always in DOM, transitions via CSS) ── */}
+      <div className="lg:hidden">
+        {/* Backdrop */}
+        <div
+          className={cn(
+            'fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-200',
+            mobileSidebarOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
+          )}
+          onClick={closeMobileSidebar}
+          aria-hidden="true"
+        />
+
+        {/* Drawer panel */}
+        <aside
+          className={cn(
+            'fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-border-subtle bg-bg-surface transition-transform duration-300 ease-out',
+            mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          )}
+        >
+          {/* Header */}
+          <div className="flex h-16 items-center justify-between border-b border-border-subtle px-4">
+            <div className="flex items-center gap-2">
+              <span className="font-display text-lg font-bold text-text-primary">
+                Stock<span className="text-accent-primary">Up</span>
+              </span>
+              <span className="rounded-full bg-accent-gold-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-accent-gold">
+                Admin
+              </span>
+            </div>
+            <button
               onClick={closeMobileSidebar}
-              aria-hidden="true"
-            />
-
-            {/* Drawer panel */}
-            <motion.aside
-              className="fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-border-subtle bg-bg-surface lg:hidden"
-              initial={{ x: '-100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '-100%' }}
-              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-text-tertiary transition-colors hover:bg-bg-elevated hover:text-text-primary"
+              aria-label="Close navigation"
             >
-              {/* Drawer header */}
-              <div className="flex h-16 items-center justify-between border-b border-border-subtle px-4">
-                <div className="flex items-center gap-2">
-                  <span className="font-display text-lg font-bold text-text-primary">
-                    Stock<span className="text-accent-primary">Up</span>
-                  </span>
-                  <span className="rounded-full bg-accent-gold-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-accent-gold">
-                    Admin
-                  </span>
-                </div>
-                <button
-                  onClick={closeMobileSidebar}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-text-tertiary transition-colors hover:bg-bg-elevated hover:text-text-primary"
-                  aria-label="Close navigation"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
+              <X className="h-4 w-4" />
+            </button>
+          </div>
 
-              {/* Nav */}
-              <nav className="flex-1 overflow-y-auto py-4">
-                <ul className="space-y-1 px-2">
-                  {navLinks(closeMobileSidebar)}
-                </ul>
-              </nav>
+          {/* Nav */}
+          <nav className="flex-1 overflow-y-auto py-4">
+            <ul className="space-y-1 px-2">
+              {NAV_ITEMS.map((item) => {
+                const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      onClick={closeMobileSidebar}
+                      className={cn(
+                        'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150',
+                        isActive
+                          ? 'border-l-2 border-accent-primary bg-accent-primary-muted text-accent-primary'
+                          : 'text-text-secondary hover:bg-bg-elevated hover:text-text-primary',
+                      )}
+                    >
+                      <item.icon className="h-4 w-4 shrink-0" />
+                      <span className="flex-1">{item.label}</span>
+                      {item.badge > 0 && (
+                        <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-accent-primary px-1.5 text-[10px] font-bold text-text-inverse">
+                          {item.badge > 99 ? '99+' : item.badge}
+                        </span>
+                      )}
+                    </Link>
+                  </li>
+                )
+              })}
+            </ul>
+          </nav>
 
-              {/* Sign out */}
-              <div className="border-t border-border-subtle px-2 py-4">
-                <button
-                  onClick={handleSignOut}
-                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-bg-elevated hover:text-text-primary"
-                >
-                  <LogOut className="h-4 w-4 shrink-0" />
-                  <span>Sign Out</span>
-                </button>
-              </div>
-            </motion.aside>
-          </>
-        )}
-      </AnimatePresence>
+          {/* Sign out */}
+          <div className="border-t border-border-subtle px-2 py-4">
+            <button
+              onClick={handleSignOut}
+              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-bg-elevated hover:text-text-primary"
+            >
+              <LogOut className="h-4 w-4 shrink-0" />
+              <span>Sign Out</span>
+            </button>
+          </div>
+        </aside>
+      </div>
 
       {/* ── Desktop sidebar ── */}
       <aside className={cn(
@@ -190,7 +180,7 @@ export function AdminSidebar({ pendingDeposits, pendingKyc, pendingWithdrawals, 
                     href={item.href}
                     title={sidebarCollapsed ? item.label : undefined}
                     className={cn(
-                      'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150',
+                      'relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150',
                       isActive
                         ? 'border-l-2 border-accent-primary bg-accent-primary-muted text-accent-primary'
                         : 'text-text-secondary hover:bg-bg-elevated hover:text-text-primary',
