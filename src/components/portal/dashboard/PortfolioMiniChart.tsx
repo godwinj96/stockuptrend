@@ -4,6 +4,7 @@ import { AreaChart, Area, ResponsiveContainer, Tooltip, type TooltipProps } from
 import { TrendingUp, TrendingDown } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils/cn'
+import { formatCompactCurrency } from '@/lib/utils/format'
 import { ROUTES } from '@/lib/constants/routes'
 import type { PortfolioSnapshot } from '@/lib/supabase/types'
 
@@ -44,8 +45,8 @@ export function PortfolioMiniChart({ snapshots, currency: _ }: PortfolioMiniChar
       {hasData ? (
         <>
           <div className="mb-1 flex items-center gap-2">
-            <span className="font-display text-xl font-bold tabular-nums text-text-primary">
-              ${last.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            <span className="font-display text-base font-bold tabular-nums text-text-primary sm:text-xl">
+              {formatCompactCurrency(last)}
             </span>
             <span className={cn('flex items-center gap-0.5 text-xs font-semibold', isUp ? 'text-accent-primary' : 'text-danger')}>
               {isUp ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}

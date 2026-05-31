@@ -31,7 +31,7 @@ export function RecentTransactions({ initialTransactions }: RecentTransactionsPr
   const transactions = initialTransactions
 
   return (
-    <div className="rounded-xl border border-border-subtle bg-bg-surface p-6 shadow-card">
+    <div className="rounded-xl border border-border-subtle bg-bg-surface p-4 shadow-card sm:p-6">
       <div className="mb-5 flex items-center justify-between">
         <h2 className="font-display text-base font-semibold text-text-primary">
           Recent Transactions
@@ -71,14 +71,14 @@ export function RecentTransactions({ initialTransactions }: RecentTransactionsPr
                   <p className="text-xs text-text-tertiary">{formatRelativeTime(tx.created_at ?? '')}</p>
                 </div>
 
-                <div className="flex flex-col items-end gap-1">
-                  <span className={cn('text-sm font-semibold tabular-nums', typeConfig.amountClass)}>
+                <div className="flex shrink-0 flex-col items-end gap-1">
+                  <span className={cn('text-xs font-semibold tabular-nums sm:text-sm', typeConfig.amountClass)}>
                     {tx.type === 'withdrawal' ? '−' : '+'}
                     {formatCurrency(tx.amount, tx.currency ?? 'USD')}
                   </span>
                   <span
                     className={cn(
-                      'flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium',
+                      'flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium',
                       statusConfig.className
                     )}
                   >

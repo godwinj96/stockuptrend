@@ -50,17 +50,17 @@ export function AIStatusWidget({
         </span>
       </div>
 
-      <div className="mb-4 grid grid-cols-3 gap-3">
-        <div className="rounded-lg bg-bg-elevated p-2.5 text-center">
-          <p className="font-display text-lg font-bold tabular-nums text-text-primary">{openPositions}</p>
+      <div className="mb-4 grid grid-cols-3 gap-2">
+        <div className="rounded-lg bg-bg-elevated p-2 text-center sm:p-2.5">
+          <p className="font-display text-base font-bold tabular-nums text-text-primary sm:text-lg">{openPositions}</p>
           <p className="text-[10px] text-text-tertiary">Open</p>
         </div>
-        <div className="rounded-lg bg-bg-elevated p-2.5 text-center">
-          <p className="font-display text-lg font-bold tabular-nums text-text-primary">{totalTrades}</p>
+        <div className="rounded-lg bg-bg-elevated p-2 text-center sm:p-2.5">
+          <p className="font-display text-base font-bold tabular-nums text-text-primary sm:text-lg">{totalTrades}</p>
           <p className="text-[10px] text-text-tertiary">Trades</p>
         </div>
-        <div className="rounded-lg bg-bg-elevated p-2.5 text-center">
-          <p className={cn('font-display text-lg font-bold tabular-nums', winRate >= 60 ? 'text-accent-primary' : 'text-text-primary')}>
+        <div className="rounded-lg bg-bg-elevated p-2 text-center sm:p-2.5">
+          <p className={cn('font-display text-base font-bold tabular-nums sm:text-lg', winRate >= 60 ? 'text-accent-primary' : 'text-text-primary')}>
             {winRate}%
           </p>
           <p className="text-[10px] text-text-tertiary">Win Rate</p>

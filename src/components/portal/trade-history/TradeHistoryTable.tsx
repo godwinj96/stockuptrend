@@ -59,19 +59,19 @@ export function TradeHistoryTable({ trades, totalCount, currentPage, pageSize }:
     <div>
       {/* Filters + export */}
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <input
             type="text"
             placeholder="Filter by symbol"
             defaultValue={searchParams.get('symbol') ?? ''}
             onBlur={(e) => handleFilter('symbol', e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleFilter('symbol', (e.target as HTMLInputElement).value)}
-            className="input-field w-40 text-sm"
+            className="input-field w-full text-sm sm:w-40"
           />
           <select
             defaultValue={searchParams.get('direction') ?? ''}
             onChange={(e) => handleFilter('direction', e.target.value)}
-            className="input-field w-32 text-sm"
+            className="input-field w-full text-sm sm:w-32"
           >
             <option value="">All sides</option>
             <option value="buy">Buy</option>

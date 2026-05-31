@@ -6,7 +6,7 @@ import { useReducedMotion } from 'framer-motion'
 import { Bot, Power, TrendingUp, TrendingDown } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils/cn'
-import { formatCurrency } from '@/lib/utils/format'
+import { formatCompactCurrency } from '@/lib/utils/format'
 
 interface AIStatusCardProps {
   accountId: string
@@ -86,8 +86,8 @@ export function AIStatusCard({
       <div className="mb-5 grid grid-cols-2 gap-4">
         <div className="rounded-lg bg-bg-elevated p-3">
           <p className="text-xs text-text-tertiary">Today&apos;s Return</p>
-          <p className={cn('mt-1 font-display text-xl font-bold tabular-nums', pnlPositive ? 'text-accent-primary' : 'text-danger')}>
-            {pnlPositive ? '+' : ''}{formatCurrency(todayPnL)}
+          <p className={cn('mt-1 font-display text-base font-bold tabular-nums sm:text-xl', pnlPositive ? 'text-accent-primary' : 'text-danger')}>
+            {pnlPositive ? '+' : ''}{formatCompactCurrency(todayPnL)}
           </p>
           <div className="mt-0.5 flex items-center gap-1">
             {pnlPositive ? (

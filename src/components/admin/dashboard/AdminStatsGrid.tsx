@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react'
 import { animate, useReducedMotion } from 'framer-motion'
 import { Users, ArrowDownToLine, ShieldCheck, MessageSquare, TrendingUp, ArrowUpFromLine } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
-import { formatCurrency } from '@/lib/utils/format'
+import { formatCompactCurrency } from '@/lib/utils/format'
 
 interface AdminStatsGridProps {
   totalUsers: number
@@ -31,35 +31,33 @@ function StatCard({ label, value, format = 'number', icon: Icon, iconClass, urge
   useEffect(() => {
     const node = ref.current
     if (!node) return
+    const display = (v: number) =>
+      format === 'currency' ? formatCompactCurrency(v) : Math.round(v).toString()
     if (shouldReduceMotion) {
-      node.textContent = format === 'currency' ? formatCurrency(value) : String(value)
+      node.textContent = display(value)
       return
     }
     const controls = animate(0, value, {
       duration: 0.8,
       ease: 'easeOut',
-      onUpdate: (v) => {
-        node.textContent = format === 'currency'
-          ? formatCurrency(v)
-          : Math.round(v).toString()
-      },
+      onUpdate: (v) => { node.textContent = display(v) },
     })
     return () => controls.stop()
   }, [value, format, shouldReduceMotion])
 
   return (
     <div className={cn(
-      'rounded-xl border bg-bg-surface p-5 shadow-card',
+      'rounded-xl border bg-bg-surface p-4 shadow-card sm:p-5',
       urgency && value > 0 ? 'border-warning/30' : 'border-border-subtle'
     )}>
       <div className="mb-3 flex items-center justify-between">
         <p className="text-xs font-medium text-text-secondary">{label}</p>
-        <span className={cn('flex h-8 w-8 items-center justify-center rounded-lg', iconClass)}>
+        <span className={cn('flex h-8 w-8 shrink-0 items-center justify-center rounded-lg', iconClass)}>
           <Icon className="h-4 w-4" />
         </span>
       </div>
-      <p className="font-display text-2xl font-bold tabular-nums text-text-primary">
-        <span ref={ref}>{format === 'currency' ? formatCurrency(value) : String(value)}</span>
+      <p className="font-display text-xl font-bold tabular-nums text-text-primary sm:text-2xl">
+        <span ref={ref}>{format === 'currency' ? formatCompactCurrency(value) : String(value)}</span>
       </p>
       {urgency && value > 0 && (
         <p className="mt-1 text-xs font-medium text-warning">Requires attention</p>
@@ -70,7 +68,7 @@ function StatCard({ label, value, format = 'number', icon: Icon, iconClass, urge
 
 export function AdminStatsGrid({ totalUsers, pendingDeposits, pendingKyc, openTickets, pendingWithdrawals, totalVolume }: AdminStatsGridProps) {
   return (
-    <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
+    <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-6">
       <StatCard label="Total Users"          value={totalUsers}          icon={Users}            iconClass="bg-accent-secondary-muted text-accent-secondary" />
       <StatCard label="Total Volume"         value={totalVolume}         icon={TrendingUp}       iconClass="bg-accent-primary-muted text-accent-primary"     format="currency" />
       <StatCard label="Pending Deposits"     value={pendingDeposits}     icon={ArrowDownToLine}  iconClass="bg-warning/10 text-warning"                      urgency />

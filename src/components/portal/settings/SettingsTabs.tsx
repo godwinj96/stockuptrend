@@ -20,13 +20,13 @@ export function SettingsTabs({ profile, userId, userEmail }: Props) {
   return (
     <div>
       {/* Tab bar */}
-      <div className="mb-6 flex gap-1 rounded-xl border border-border-subtle bg-bg-surface p-1">
+      <div className="mb-6 flex gap-1 overflow-x-auto rounded-xl border border-border-subtle bg-bg-surface p-1">
         {TABS.map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={cn(
-              'flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-all duration-150',
+              'flex-1 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium transition-all duration-150',
               activeTab === tab
                 ? 'bg-bg-elevated text-text-primary shadow-sm'
                 : 'text-text-tertiary hover:text-text-secondary'

@@ -89,7 +89,7 @@ export function WithdrawalForm({ accountId, balance, currency, userId: _userId }
       {/* Balance */}
       <div className="mb-6 rounded-xl bg-bg-elevated p-4">
         <p className="text-xs text-text-tertiary">Available Balance</p>
-        <p className="font-display text-3xl font-bold text-text-primary">
+        <p className="font-display text-xl font-bold text-text-primary sm:text-3xl">
           {formatCurrency(balance, currency)}
         </p>
       </div>

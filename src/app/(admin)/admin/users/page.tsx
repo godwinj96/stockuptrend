@@ -73,16 +73,16 @@ export default async function AdminUsersPage({
             name="search"
             defaultValue={search}
             placeholder="Search name or email…"
-            className="input-field pl-9 text-sm w-64"
+            className="input-field pl-9 text-sm w-full sm:w-64"
           />
         </div>
-        <select name="account_type" defaultValue={accountType} className="input-field text-sm w-36">
+        <select name="account_type" defaultValue={accountType} className="input-field text-sm w-full sm:w-36">
           <option value="">All tiers</option>
           <option value="standard">Standard</option>
           <option value="pro">Pro</option>
           <option value="vip">VIP</option>
         </select>
-        <select name="kyc_status" defaultValue={kycStatus} className="input-field text-sm w-44">
+        <select name="kyc_status" defaultValue={kycStatus} className="input-field text-sm w-full sm:w-44">
           <option value="">All KYC status</option>
           <option value="not_started">Not started</option>
           <option value="pending">Pending</option>

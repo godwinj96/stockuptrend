@@ -53,7 +53,7 @@ export function BalanceWidget({ balance, currency, accountNumber, accountType }:
   }, [balance, currency, shouldReduceMotion])
 
   return (
-    <div className="rounded-xl border border-border-subtle bg-bg-surface p-6 shadow-card">
+    <div className="rounded-xl border border-border-subtle bg-bg-surface p-4 shadow-card sm:p-6">
       <div className="mb-1 flex items-center justify-between">
         <p className="text-sm font-medium text-text-secondary">Account Balance</p>
         <span
@@ -69,7 +69,7 @@ export function BalanceWidget({ balance, currency, accountNumber, accountType }:
       <div className="mb-1">
         <span
           ref={balanceRef}
-          className="font-display text-4xl font-bold tabular-nums text-text-primary"
+          className="font-display text-2xl font-bold tabular-nums text-text-primary sm:text-3xl lg:text-4xl"
         >
           {formatCurrency(balance, currency)}
         </span>

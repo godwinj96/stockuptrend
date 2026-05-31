@@ -28,6 +28,15 @@ export function formatCompactNumber(value: number): string {
   }).format(value)
 }
 
+export function formatCompactCurrency(amount: number, currency = 'USD'): string {
+  const abs = Math.abs(amount)
+  const sign = amount < 0 ? '-' : ''
+  const symbol = currency === 'USD' ? '$' : `${currency} `
+  if (abs >= 1_000_000) return `${sign}${symbol}${(abs / 1_000_000).toFixed(1)}M`
+  if (abs >= 1_000)     return `${sign}${symbol}${(abs / 1_000).toFixed(1)}k`
+  return formatCurrency(amount, currency)
+}
+
 export function formatPercent(value: number, decimals = 2): string {
   const sign = value > 0 ? '+' : ''
   return `${sign}${value.toFixed(decimals)}%`
