@@ -152,6 +152,19 @@ export const INSTRUMENTS: Instrument[] = [
     slug: 'tsla',
     tradingViewSymbol: 'NASDAQ:TSLA',
   },
+  {
+    id: "Spcx",
+    symbol: "SPCX",
+    displaySymbol:"SPCX",
+    name:"Space Exploration Technologies Corp",
+    category:"stocks",
+    spread:"from $0.10",
+    leverage:"up to 1.20",
+    minTradeSize:"0.1 shares",
+    description:"Provider of commercial launch services and satellite-based Starlink broadband internet" ,
+    slug: 'spcx', 
+    tradingViewSymbol: "NASDAQ:SPCX"
+  },
   // Commodities
   {
     id: 'gold',
@@ -189,6 +202,7 @@ export const FEATURED_TRADINGVIEW_SYMBOLS = [
   { proName: 'BITSTAMP:ETHUSD', title: 'Ethereum' },
   { proName: 'NASDAQ:AAPL', title: 'Apple' },
   { proName: 'NASDAQ:TSLA', title: 'Tesla' },
+  {proName: 'NASDAQ:SPCX', title: 'SpaceXcondition'},
   { proName: 'TVC:GOLD', title: 'Gold' },
   { proName: 'NYMEX:CL1!', title: 'Crude Oil' },
 ]
