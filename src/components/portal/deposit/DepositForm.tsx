@@ -21,7 +21,7 @@ type PaymentMethod = 'card' | 'bank' | 'crypto'
 
 const METHODS: Array<{ id: PaymentMethod; label: string; icon: React.ComponentType<{ className?: string }>; detail: string }> = [
   { id: 'card', label: 'Card', icon: CreditCard, detail: 'Instant · $10–$10,000' },
-  { id: 'bank', label: 'Bank Transfer', icon: Building2, detail: '1–3 days · $100–$100,000' },
+  // { id: 'bank', label: 'Bank Transfer', icon: Building2, detail: '1–3 days · $100–$100,000' },
   { id: 'crypto', label: 'Cryptocurrency', icon: Bitcoin, detail: '~30 min · $10–$50,000' },
 ]
 
@@ -46,7 +46,7 @@ export function DepositForm({ accountId, accountNumber, currency, userId, deposi
   return (
     <div className="rounded-2xl border border-border-subtle bg-bg-surface p-6">
       {/* Method tabs with sliding indicator */}
-      <div className="mb-6 grid grid-cols-3 gap-2">
+      <div className="mb-6 grid grid-cols-2 gap-2">
         {METHODS.map((m) => (
           <button
             key={m.id}
