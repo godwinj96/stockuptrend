@@ -19,8 +19,17 @@ export const DEFAULT_STRATEGY: StrategyConfig = {
   closes_per_cycle_max: 3,
 }
 
-// How many minutes back we spread new trade timestamps over
-const CYCLE_WINDOW_MINUTES = 30
+// Trades spread over last 2 hours for realistic intraday distribution
+const CYCLE_WINDOW_MINUTES = 120
+
+// Per-category price variance for realistic open-price simulation
+const VARIANCE_BY_CATEGORY: Record<SymbolConfig['category'], number> = {
+  forex:     0.003,
+  crypto:    0.020,
+  stock:     0.010,
+  commodity: 0.008,
+  index:     0.005,
+}
 
 export interface OpenTradeRow {
   id: string
@@ -44,7 +53,7 @@ export interface NewTradeSpec {
   open_price: number
   stop_loss: number
   take_profit: number
-  open_at: string   // staggered — random time within last CYCLE_WINDOW_MINUTES
+  open_at: string
   status: 'open'
 }
 
@@ -52,7 +61,7 @@ export interface CloseResult {
   close_price: number
   profit_loss: number
   close_reason: 'take_profit' | 'stop_loss'
-  close_at: string   // random time between open_at and now
+  close_at: string
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -86,8 +95,7 @@ export function computeRiskLevels(
   let tpPct: number
 
   switch (sym.category) {
-    case 'forex':
-      // 20–40 pip SL, 35–70 pip TP (pip = 0.0001 for most pairs, 0.01 for JPY)
+    case 'forex': {
       const pipSize = sym.pipDecimalPlaces >= 5 ? 0.0001 : 0.01
       const slPips = randBetween(20, 40)
       const tpPips = randBetween(35, 70)
@@ -99,6 +107,7 @@ export function computeRiskLevels(
         stop_loss:   parseFloat(rawSl.toFixed(sym.pipDecimalPlaces)),
         take_profit: parseFloat(rawTp.toFixed(sym.pipDecimalPlaces)),
       }
+    }
     case 'crypto':
       slPct = randBetween(0.006, 0.012)
       tpPct = randBetween(0.010, 0.022)
@@ -135,15 +144,15 @@ export function computeRiskLevels(
 
 export function simulateOpenPrice(symbolId: string): number {
   const sym = getSymbolById(symbolId)
-  const variance = sym.basePrice * 0.005 * (Math.random() * 2 - 1)
+  const variancePct = VARIANCE_BY_CATEGORY[sym.category]
+  const variance = sym.basePrice * variancePct * (Math.random() * 2 - 1)
   return parseFloat((sym.basePrice + variance).toFixed(sym.pipDecimalPlaces))
 }
 
 // ─── Close Decision ───────────────────────────────────────────────────────────
 
-// Simplified contract multiplier: how many currency units per 1 lot per 1 pip/point of move
 const CONTRACT_MULTIPLIER: Record<SymbolConfig['category'], number> = {
-  forex:     10_000,   // 1 lot = 100k units, ~$10/pip for majors
+  forex:     10_000,
   crypto:    1,
   stock:     1,
   commodity: 1,
@@ -152,8 +161,9 @@ const CONTRACT_MULTIPLIER: Record<SymbolConfig['category'], number> = {
 
 /**
  * Decide whether a trade closes this cycle and compute the result.
- * Older trades have a higher chance of closing (they've had more time to hit TP/SL).
- * If closing: outcome is determined by strategy win_rate.
+ * Older trades have a higher chance of closing.
+ * Win/loss outcome uses per-trade jitter around strategy win_rate for realism.
+ * Slippage is applied to the close price to reduce predictability.
  */
 export function simulateTradeClose(
   trade: OpenTradeRow,
@@ -162,30 +172,51 @@ export function simulateTradeClose(
 ): CloseResult | null {
   const ageMinutes = (nowMs - new Date(trade.open_at).getTime()) / 60_000
 
-  // Probability ramps from ~0.45 at 0 min to ~0.85 at 90+ min
-  const closeProbability = Math.min(0.45 + (ageMinutes / 90) * 0.40, 0.85)
+  // Probability ramps from ~0.45 at 0 min to ~0.85 at 90+ min, with per-trade noise
+  const rampNoise = randBetween(-0.05, 0.05)
+  const closeProbability = Math.min(0.45 + rampNoise + (ageMinutes / 90) * 0.40, 0.85)
 
   if (Math.random() >= closeProbability) return null
 
-  const isWin = Math.random() < strategy.win_rate
+  // Per-trade win rate jitter (±6%) so outcomes aren't mechanically uniform
+  const effectiveWinRate = Math.min(0.95, Math.max(0.40,
+    strategy.win_rate + randBetween(-0.06, 0.06)
+  ))
+
+  const isWin = Math.random() < effectiveWinRate
   const sym = getSymbolById(trade.symbol)
   const multiplier = CONTRACT_MULTIPLIER[sym.category]
 
-  // Fall back gracefully if SL/TP are null (legacy trades without them)
   const sl = trade.stop_loss ?? trade.open_price * (trade.direction === 'buy' ? 0.99 : 1.01)
   const tp = trade.take_profit ?? trade.open_price * (trade.direction === 'buy' ? 1.015 : 0.985)
 
-  const closePrice = isWin ? tp : sl
-  const rawPnL = isWin
-    ? Math.abs(tp - trade.open_price) * trade.volume * multiplier
-    : -Math.abs(sl - trade.open_price) * trade.volume * multiplier
+  // Slippage: worsens the close price slightly (realistic fill simulation)
+  let closePrice = isWin ? tp : sl
+  if (sym.category === 'forex') {
+    const pipSize = sym.pipDecimalPlaces >= 5 ? 0.0001 : 0.01
+    const slippagePips = randBetween(0.5, 2.0) * pipSize
+    // For wins: fill slightly worse than TP; for losses: fill slightly worse than SL
+    closePrice = isWin
+      ? (trade.direction === 'buy' ? closePrice - slippagePips : closePrice + slippagePips)
+      : (trade.direction === 'buy' ? closePrice - slippagePips : closePrice + slippagePips)
+  } else {
+    const slippagePct = randBetween(0.001, 0.002)
+    const slippageAmt = closePrice * slippagePct
+    closePrice = isWin
+      ? (trade.direction === 'buy' ? closePrice - slippageAmt : closePrice + slippageAmt)
+      : (trade.direction === 'buy' ? closePrice - slippageAmt : closePrice + slippageAmt)
+  }
+  closePrice = parseFloat(closePrice.toFixed(sym.pipDecimalPlaces))
 
-  // Close time: random point between open_at and now
+  const rawPnL = isWin
+    ? Math.abs(closePrice - trade.open_price) * trade.volume * multiplier
+    : -Math.abs(closePrice - trade.open_price) * trade.volume * multiplier
+
   const openMs = new Date(trade.open_at).getTime()
   const closeMs = openMs + Math.random() * (nowMs - openMs)
 
   return {
-    close_price:  parseFloat(closePrice.toFixed(sym.pipDecimalPlaces)),
+    close_price:  closePrice,
     profit_loss:  parseFloat(rawPnL.toFixed(2)),
     close_reason: isWin ? 'take_profit' : 'stop_loss',
     close_at:     new Date(closeMs).toISOString(),
@@ -199,15 +230,15 @@ export function buildNewTrades(
   userId: string,
   openTrades: OpenTradeRow[],
   strategy: StrategyConfig,
+  preferredSymbols: string[] = [],
 ): NewTradeSpec[] {
-  // Increase volume: multiply the strategy min/max by 3-4x for more activity
   const count = randInt(
     strategy.trades_per_cycle_min * 3,
     strategy.trades_per_cycle_max * 4,
   )
 
   const existingSymbols = openTrades.map((t) => t.symbol)
-  const symbols = pickDistinctSymbols(count, existingSymbols)
+  const symbols = pickDistinctSymbols(count, existingSymbols, preferredSymbols)
   const nowMs = Date.now()
 
   return symbols.map((sym) => {
@@ -219,7 +250,6 @@ export function buildNewTrades(
     const openPrice = simulateOpenPrice(sym.id)
     const { stop_loss, take_profit } = computeRiskLevels(sym, direction, openPrice)
 
-    // Stagger open_at across the last CYCLE_WINDOW_MINUTES
     const openAt = new Date(nowMs - Math.random() * CYCLE_WINDOW_MINUTES * 60_000).toISOString()
 
     return {

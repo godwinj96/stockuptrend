@@ -9,6 +9,10 @@ const nextConfig = {
         hostname: '*.supabase.co',
         pathname: '/storage/v1/object/public/**',
       },
+      {
+        protocol: 'https',
+        hostname: 's3-symbol-logo.tradingview.com',
+      },
     ],
   },
   async headers() {
@@ -18,7 +22,7 @@ const nextConfig = {
       default-src 'self';
       script-src 'self' 'unsafe-inline' https://s3.tradingview.com https://s.tradingview.com https://js.stripe.com https://buy.moonpay.com https://www.googletagmanager.com;
       style-src 'self' 'unsafe-inline';
-      img-src 'self' data: blob: https://*.supabase.co https://assets.tradingview.com;
+      img-src 'self' data: blob: https://*.supabase.co https://assets.tradingview.com https://s3-symbol-logo.tradingview.com;
       frame-src https://js.stripe.com https://hooks.stripe.com https://buy.moonpay.com https://s.tradingview.com https://widget.coinbase.com;
       connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://api.moonpay.com https://api.commerce.coinbase.com https://s3.tradingview.com https://api.sentry.io;
       font-src 'self';

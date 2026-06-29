@@ -16,6 +16,7 @@ const CATEGORY_COLORS: Record<InstrumentCategory, string> = {
   crypto: 'bg-accent-secondary/10 text-accent-secondary',
   stocks: 'bg-accent-gold/10 text-accent-gold',
   commodities: 'bg-warning/10 text-warning',
+  indices: 'bg-text-secondary/10 text-text-secondary',
 }
 
 export default function TradingInstrumentsPage({

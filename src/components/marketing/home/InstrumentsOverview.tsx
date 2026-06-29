@@ -15,6 +15,7 @@ const CATEGORY_ICONS: Record<InstrumentCategory, React.ComponentType<{ className
   crypto: Zap,
   stocks: BarChart2,
   commodities: Layers,
+  indices: BarChart2,
 }
 
 function TiltCard({ category, info, i, isInView }: {

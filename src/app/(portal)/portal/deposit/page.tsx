@@ -20,14 +20,14 @@ export default async function DepositPage() {
   const [{ data: rawAccount }, { data: settingsRows }] = await Promise.all([
     supabase
       .from('accounts')
-      .select('id, balance, currency, account_type, account_number')
+      .select('id, balance, currency, account_type, account_number, preferred_symbols')
       .eq('user_id', user!.id)
       .eq('is_active', true)
       .single(),
     db.from('deposit_settings').select('key, value'),
   ])
 
-  const account = rawAccount as Pick<Account, 'id' | 'balance' | 'currency' | 'account_type' | 'account_number'> | null
+  const account = rawAccount as (Pick<Account, 'id' | 'balance' | 'currency' | 'account_type' | 'account_number'> & { preferred_symbols?: string[] | null }) | null
 
   const depositSettings: Record<string, string> = {}
   for (const row of (settingsRows ?? []) as { key: string; value: string }[]) {
@@ -49,6 +49,7 @@ export default async function DepositPage() {
           currency={account?.currency ?? 'USD'}
           userId={user!.id}
           depositSettings={depositSettings}
+          initialPreferredSymbols={account?.preferred_symbols ?? []}
         />
       </div>
     </div>

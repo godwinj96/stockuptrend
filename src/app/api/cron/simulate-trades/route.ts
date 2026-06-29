@@ -18,10 +18,16 @@ interface AccountRow {
   total_profit: number | null
   total_trades: number | null
   winning_trades: number | null
+  preferred_symbols: string[] | null
   ai_strategies: StrategyConfig | null
 }
 
-export async function GET(_req: NextRequest) {
+export async function GET(req: NextRequest) {
+  // Verify Vercel cron secret to prevent unauthorized invocations
+  if (req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   const serviceSupabase = createServiceRoleClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = serviceSupabase as any
@@ -38,6 +44,7 @@ export async function GET(_req: NextRequest) {
       total_profit,
       total_trades,
       winning_trades,
+      preferred_symbols,
       ai_strategies (
         win_rate,
         risk_per_trade,
@@ -62,6 +69,7 @@ export async function GET(_req: NextRequest) {
   for (const account of accounts) {
     try {
       const strategy: StrategyConfig = account.ai_strategies ?? DEFAULT_STRATEGY
+      const preferredSymbols: string[] = account.preferred_symbols ?? []
 
       const { data: openTradesRaw } = await serviceSupabase
         .from('trades')
@@ -75,7 +83,6 @@ export async function GET(_req: NextRequest) {
       let winCount = 0
       let closedCount = 0
 
-      // Evaluate every open trade individually — close if TP or SL hit
       for (const trade of openTrades) {
         const result = simulateTradeClose(trade, strategy, nowMs)
         if (!result) continue
@@ -123,16 +130,31 @@ export async function GET(_req: NextRequest) {
         })
         .eq('id', account.id)
 
-      await db.from('portfolio_snapshots').insert({
-        user_id:     account.user_id,
-        account_id:  account.id,
-        balance:     newBalance,
-        equity:      newBalance,
-        snapshot_at: nowIso,
-      })
+      // Idempotency: skip snapshot if one already exists within the last 3 hours
+      const threeHoursAgo = new Date(nowMs - 3 * 60 * 60 * 1000).toISOString()
+      const { count: recentSnapshotCount } = await serviceSupabase
+        .from('portfolio_snapshots')
+        .select('id', { count: 'exact', head: true })
+        .eq('account_id', account.id)
+        .gte('snapshot_at', threeHoursAgo)
 
-      // Open new trades with staggered timestamps and TP/SL
-      const newTradeSpecs = buildNewTrades(account.id, account.user_id, openTrades, strategy)
+      if (!recentSnapshotCount || recentSnapshotCount === 0) {
+        await db.from('portfolio_snapshots').insert({
+          user_id:     account.user_id,
+          account_id:  account.id,
+          balance:     newBalance,
+          equity:      newBalance,
+          snapshot_at: nowIso,
+        })
+      }
+
+      const newTradeSpecs = buildNewTrades(
+        account.id,
+        account.user_id,
+        openTrades,
+        strategy,
+        preferredSymbols,
+      )
       if (newTradeSpecs.length > 0) {
         await db.from('trades').insert(newTradeSpecs)
       }

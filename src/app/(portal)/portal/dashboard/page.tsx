@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 import { redirect } from 'next/navigation'
 import { createServerClient } from '@/lib/supabase/server'
 import { getServerUser, getProfile } from '@/lib/supabase/queries'
@@ -7,9 +8,33 @@ import { BalanceWidget } from '@/components/portal/dashboard/BalanceWidget'
 import { RecentTransactions } from '@/components/portal/dashboard/RecentTransactions'
 import { QuickActions } from '@/components/portal/dashboard/QuickActions'
 import { PortfolioMiniChart } from '@/components/portal/dashboard/PortfolioMiniChart'
-import { AIStatusWidget } from '@/components/portal/dashboard/AIStatusWidget'
+import { LivePriceTicker } from '@/components/portal/dashboard/LivePriceTicker'
+import { AIStatusSuspense } from './AIStatusSuspense'
 import { ROUTES } from '@/lib/constants/routes'
 import type { Account, Transaction, PortfolioSnapshot, Profile } from '@/lib/supabase/types'
+
+function PositionsSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="rounded-xl border border-border-subtle bg-bg-surface p-5 shadow-card">
+        <div className="mb-4 h-4 w-32 animate-pulse rounded bg-bg-elevated" />
+        <div className="space-y-2">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-9 animate-pulse rounded-lg bg-bg-elevated" />
+          ))}
+        </div>
+      </div>
+      <div className="rounded-xl border border-border-subtle bg-bg-surface p-5 shadow-card">
+        <div className="mb-4 h-4 w-24 animate-pulse rounded bg-bg-elevated" />
+        <div className="grid grid-cols-2 gap-3">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-14 animate-pulse rounded-lg bg-bg-elevated" />
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export const metadata: Metadata = {
   title: 'Dashboard',
@@ -52,16 +77,7 @@ export default async function DashboardPage({
   const snapshots = (snapshotsResult.data ?? []) as PortfolioSnapshot[]
   const primaryAccount = accounts?.[0] ?? null
 
-  // Fetch open positions count
-  const { count: openPositionsCount } = primaryAccount
-    ? await supabase
-        .from('trades')
-        .select('id', { count: 'exact', head: true })
-        .eq('account_id', primaryAccount.id)
-        .eq('status', 'open')
-    : { count: 0 }
-
-  // Redirect admins who accidentally land on the portal — unless they came here intentionally via ?preview=1
+  // Redirect admins who accidentally land on the portal
   const isAdmin = (profile as Profile & { role?: string } | null)?.role === 'admin'
   if (isAdmin && searchParams.preview !== '1') {
     redirect(ROUTES.admin.dashboard)
@@ -75,7 +91,7 @@ export default async function DashboardPage({
       : 0
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
+    <div className="mx-auto max-w-6xl space-y-4">
       {profile && (
         <div className="anim-fade-up" style={{ animationDelay: '0ms' }}>
           <KYCStatusBanner
@@ -85,31 +101,43 @@ export default async function DashboardPage({
         </div>
       )}
 
+      {/* Live price ticker — full width */}
+      <div className="anim-fade-up" style={{ animationDelay: '40ms' }}>
+        <LivePriceTicker />
+      </div>
+
       <div className="grid gap-6 lg:grid-cols-3">
+        {/* Left column */}
         <div className="anim-fade-up space-y-6 lg:col-span-2" style={{ animationDelay: '80ms' }}>
           <BalanceWidget
             balance={primaryAccount?.balance ?? 0}
             currency={primaryAccount?.currency ?? 'USD'}
             accountNumber={primaryAccount?.account_number ?? '—'}
             accountType={primaryAccount?.account_type ?? 'standard'}
+            openTrades={[]}
           />
           <RecentTransactions initialTransactions={recentTransactions ?? []} userId={user.id} />
+          {/* Positions stream in independently — SWR in LiveOpenPositions self-populates */}
+          {primaryAccount && (
+            <Suspense fallback={<PositionsSkeleton />}>
+              <AIStatusSuspense
+                accountId={primaryAccount.id}
+                currency={primaryAccount.currency ?? 'USD'}
+                aiActive={primaryAccount.ai_active ?? true}
+                strategyName={strategyName}
+                totalTrades={primaryAccount.total_trades ?? 0}
+                winRate={winRate}
+              />
+            </Suspense>
+          )}
         </div>
 
+        {/* Right column */}
         <div className="anim-fade-up space-y-4" style={{ animationDelay: '160ms' }}>
           <PortfolioMiniChart
             snapshots={snapshots}
             currency={primaryAccount?.currency ?? 'USD'}
           />
-          {primaryAccount && (
-            <AIStatusWidget
-              aiActive={primaryAccount.ai_active ?? true}
-              openPositions={openPositionsCount ?? 0}
-              strategyName={strategyName}
-              totalTrades={primaryAccount.total_trades ?? 0}
-              winRate={winRate}
-            />
-          )}
           <QuickActions kycStatus={profile?.kyc_status ?? 'not_started'} />
         </div>
       </div>
