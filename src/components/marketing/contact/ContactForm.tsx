@@ -38,7 +38,6 @@ export function ContactForm() {
 
   async function onSubmit(data: ContactFormData) {
     await new Promise((r) => setTimeout(r, 800))
-    console.log('Contact form:', data)
     setSubmitted(true)
     reset()
     toast.success('Message sent! We will get back to you shortly.')

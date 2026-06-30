@@ -59,6 +59,7 @@ export async function POST(req: NextRequest) {
   })
 
   if (txError) {
+    // eslint-disable-next-line no-console
     console.error('demo-deposit: failed to insert transaction', txError)
     return NextResponse.json({ error: 'Transaction failed' }, { status: 500 })
   }

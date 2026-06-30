@@ -59,6 +59,7 @@ export async function GET(req: NextRequest) {
     .gt('balance', 0)
 
   if (accountsError || !accountsRaw) {
+    // eslint-disable-next-line no-console
     console.error('simulate-trades: failed to fetch accounts', accountsError)
     return NextResponse.json({ error: 'DB error fetching accounts' }, { status: 500 })
   }
@@ -99,6 +100,7 @@ export async function GET(req: NextRequest) {
           .eq('id', trade.id)
 
         if (updateErr) {
+          // eslint-disable-next-line no-console
           console.error(`simulate-trades: failed to close trade ${trade.id}`, updateErr)
           continue
         }
@@ -161,6 +163,7 @@ export async function GET(req: NextRequest) {
 
       results.push({ accountId: account.id, closed: closedCount, opened: newTradeSpecs.length })
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.error(`simulate-trades: error processing account ${account.id}`, err)
       results.push({ accountId: account.id, closed: 0, opened: 0, error: String(err) })
     }

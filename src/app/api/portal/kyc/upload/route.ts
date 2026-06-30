@@ -50,6 +50,7 @@ export async function POST(req: NextRequest) {
     .upload(storagePath, arrayBuffer, { contentType: file.type, upsert: true })
 
   if (uploadError) {
+    // eslint-disable-next-line no-console
     console.error('kyc-upload: storage error', uploadError)
     return NextResponse.json({ error: 'Upload failed' }, { status: 500 })
   }
@@ -62,6 +63,7 @@ export async function POST(req: NextRequest) {
     )
 
   if (dbError) {
+    // eslint-disable-next-line no-console
     console.error('kyc-upload: db error', dbError)
     return NextResponse.json({ error: 'Failed to save document record' }, { status: 500 })
   }

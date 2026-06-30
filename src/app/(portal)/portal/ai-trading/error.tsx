@@ -10,6 +10,7 @@ interface ErrorProps {
 
 export default function AITradingError({ error, reset }: ErrorProps) {
   useEffect(() => {
+    // eslint-disable-next-line no-console
     console.error(error)
   }, [error])
 

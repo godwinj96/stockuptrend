@@ -11,7 +11,7 @@ export default function DashboardError({
   reset: () => void
 }) {
   useEffect(() => {
-    // Log to error monitoring service
+    // eslint-disable-next-line no-console
     console.error(error)
   }, [error])
 
