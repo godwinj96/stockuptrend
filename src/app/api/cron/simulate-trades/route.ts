@@ -8,7 +8,11 @@ import {
 import type { StrategyConfig, OpenTradeRow } from '@/lib/trading/simulate'
 
 export const runtime = 'nodejs'
-export const maxDuration = 300
+export const maxDuration = 60
+
+// Number of trading sessions to simulate in one daily invocation.
+// Mimics activity spread across the day (e.g. 6 × 4-hour windows).
+const DAILY_CYCLES = 6
 
 interface AccountRow {
   id: string
@@ -22,19 +26,15 @@ interface AccountRow {
   ai_strategies: StrategyConfig | null
 }
 
-export async function GET(req: NextRequest) {
-  // Verify Vercel cron secret to prevent unauthorized invocations
-  if (req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  const serviceSupabase = createServiceRoleClient()
+async function runCycle(
+  db: ReturnType<typeof createServiceRoleClient>,
+  cycleMs: number,
+): Promise<Array<{ accountId: string; closed: number; opened: number; error?: string }>> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const db = serviceSupabase as any
-  const nowMs = Date.now()
-  const nowIso = new Date(nowMs).toISOString()
+  const anyDb = db as any
+  const cycleIso = new Date(cycleMs).toISOString()
 
-  const { data: accountsRaw, error: accountsError } = await serviceSupabase
+  const { data: accountsRaw, error: accountsError } = await db
     .from('accounts')
     .select(`
       id,
@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
   if (accountsError || !accountsRaw) {
     // eslint-disable-next-line no-console
     console.error('simulate-trades: failed to fetch accounts', accountsError)
-    return NextResponse.json({ error: 'DB error fetching accounts' }, { status: 500 })
+    return []
   }
 
   const accounts = accountsRaw as unknown as AccountRow[]
@@ -72,7 +72,7 @@ export async function GET(req: NextRequest) {
       const strategy: StrategyConfig = account.ai_strategies ?? DEFAULT_STRATEGY
       const preferredSymbols: string[] = account.preferred_symbols ?? []
 
-      const { data: openTradesRaw } = await serviceSupabase
+      const { data: openTradesRaw } = await db
         .from('trades')
         .select('id, symbol, direction, volume, open_price, stop_loss, take_profit, open_at, account_id, user_id')
         .eq('account_id', account.id)
@@ -85,10 +85,10 @@ export async function GET(req: NextRequest) {
       let closedCount = 0
 
       for (const trade of openTrades) {
-        const result = simulateTradeClose(trade, strategy, nowMs)
+        const result = simulateTradeClose(trade, strategy, cycleMs)
         if (!result) continue
 
-        const { error: updateErr } = await db
+        const { error: updateErr } = await anyDb
           .from('trades')
           .update({
             status:       'closed',
@@ -111,7 +111,7 @@ export async function GET(req: NextRequest) {
 
         const sign = result.profit_loss >= 0 ? '+' : ''
         const resultLabel = result.close_reason === 'take_profit' ? '✅ TP Hit' : '🔴 SL Hit'
-        await db.from('notifications').insert({
+        await anyDb.from('notifications').insert({
           user_id: account.user_id,
           type:    'trade_closed',
           title:   `${resultLabel}: ${trade.symbol}`,
@@ -122,7 +122,7 @@ export async function GET(req: NextRequest) {
 
       const newBalance = Math.max(0, (account.balance ?? 0) + balanceDelta)
 
-      await db
+      await anyDb
         .from('accounts')
         .update({
           balance:        newBalance,
@@ -132,21 +132,21 @@ export async function GET(req: NextRequest) {
         })
         .eq('id', account.id)
 
-      // Idempotency: skip snapshot if one already exists within the last 3 hours
-      const threeHoursAgo = new Date(nowMs - 3 * 60 * 60 * 1000).toISOString()
-      const { count: recentSnapshotCount } = await serviceSupabase
+      // Snapshot once per cycle (idempotency window: 3 hours)
+      const threeHoursAgo = new Date(cycleMs - 3 * 60 * 60 * 1000).toISOString()
+      const { count: recentSnapshotCount } = await db
         .from('portfolio_snapshots')
         .select('id', { count: 'exact', head: true })
         .eq('account_id', account.id)
         .gte('snapshot_at', threeHoursAgo)
 
       if (!recentSnapshotCount || recentSnapshotCount === 0) {
-        await db.from('portfolio_snapshots').insert({
+        await anyDb.from('portfolio_snapshots').insert({
           user_id:     account.user_id,
           account_id:  account.id,
           balance:     newBalance,
           equity:      newBalance,
-          snapshot_at: nowIso,
+          snapshot_at: cycleIso,
         })
       }
 
@@ -158,7 +158,7 @@ export async function GET(req: NextRequest) {
         preferredSymbols,
       )
       if (newTradeSpecs.length > 0) {
-        await db.from('trades').insert(newTradeSpecs)
+        await anyDb.from('trades').insert(newTradeSpecs)
       }
 
       results.push({ accountId: account.id, closed: closedCount, opened: newTradeSpecs.length })
@@ -169,5 +169,31 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  return NextResponse.json({ success: true, processed: results.length, results, timestamp: nowIso })
+  return results
+}
+
+export async function GET(req: NextRequest) {
+  if (req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const db = createServiceRoleClient()
+  const startMs = Date.now()
+  // Spread DAILY_CYCLES evenly across the past 24 hours so timestamps look realistic
+  const intervalMs = (24 * 60 * 60 * 1000) / DAILY_CYCLES
+
+  const allResults: Array<{ cycle: number; results: Array<{ accountId: string; closed: number; opened: number; error?: string }> }> = []
+
+  for (let i = 0; i < DAILY_CYCLES; i++) {
+    const cycleMs = startMs - (DAILY_CYCLES - 1 - i) * intervalMs
+    const cycleResults = await runCycle(db, cycleMs)
+    allResults.push({ cycle: i + 1, results: cycleResults })
+  }
+
+  return NextResponse.json({
+    success: true,
+    cycles: DAILY_CYCLES,
+    timestamp: new Date(startMs).toISOString(),
+    results: allResults,
+  })
 }
