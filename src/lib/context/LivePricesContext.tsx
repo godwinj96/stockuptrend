@@ -95,6 +95,7 @@ export function LivePricesProvider({ children }: { children: React.ReactNode }) 
 
     return () => {
       clearInterval(interval)
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       for (const t of directionTimers.current.values()) clearTimeout(t)
     }
   }, [shouldReduceMotion])

@@ -36,7 +36,7 @@ export function ContactForm() {
     defaultValues: { category: 'general' },
   })
 
-  async function onSubmit(data: ContactFormData) {
+  async function onSubmit(_data: ContactFormData) {
     await new Promise((r) => setTimeout(r, 800))
     setSubmitted(true)
     reset()

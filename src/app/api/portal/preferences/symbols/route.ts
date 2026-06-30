@@ -39,6 +39,7 @@ export async function POST(req: NextRequest) {
     .eq('is_active', true)
 
   if (error) {
+    // eslint-disable-next-line no-console
     console.error('preferences/symbols: update failed', error)
     return NextResponse.json({ error: 'Failed to save preferences' }, { status: 500 })
   }
