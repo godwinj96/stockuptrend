@@ -174,9 +174,11 @@ export type Database = {
           country: string | null
           created_at: string | null
           currency: string | null
+          deleted_at: string | null
           email: string | null
           full_name: string | null
           id: string
+          is_active: boolean
           kyc_status: Database["public"]["Enums"]["kyc_status"] | null
           phone: string | null
           role: 'user' | 'admin' | null
@@ -186,9 +188,11 @@ export type Database = {
           country?: string | null
           created_at?: string | null
           currency?: string | null
+          deleted_at?: string | null
           email?: string | null
           full_name?: string | null
           id: string
+          is_active?: boolean
           kyc_status?: Database["public"]["Enums"]["kyc_status"] | null
           phone?: string | null
           role?: 'user' | 'admin' | null
@@ -198,12 +202,41 @@ export type Database = {
           country?: string | null
           created_at?: string | null
           currency?: string | null
+          deleted_at?: string | null
           email?: string | null
           full_name?: string | null
           id?: string
+          is_active?: boolean
           kyc_status?: Database["public"]["Enums"]["kyc_status"] | null
           phone?: string | null
           role?: 'user' | 'admin' | null
+        }
+        Relationships: []
+      }
+      admin_audit_log: {
+        Row: {
+          action: string
+          admin_id: string
+          created_at: string
+          details: Json | null
+          id: string
+          target_user_id: string | null
+        }
+        Insert: {
+          action: string
+          admin_id: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          target_user_id?: string | null
+        }
+        Update: {
+          action?: string
+          admin_id?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          target_user_id?: string | null
         }
         Relationships: []
       }

@@ -25,7 +25,7 @@ const ACCOUNT_STYLES: Record<string, string> = {
 
 export default async function AdminUsersPage({
   searchParams,
-}: { searchParams: { search?: string; account_type?: string; kyc_status?: string; page?: string } }) {
+}: { searchParams: { search?: string; account_type?: string; kyc_status?: string; status?: string; page?: string } }) {
   const supabase = createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect(ROUTES.auth.login)
@@ -36,6 +36,7 @@ export default async function AdminUsersPage({
   const search = searchParams.search ?? ''
   const accountType = searchParams.account_type ?? ''
   const kycStatus = searchParams.kyc_status ?? ''
+  const statusFilter = searchParams.status ?? '' // '', 'suspended', 'deleted'
   const page = Math.max(1, parseInt(searchParams.page ?? '1'))
   const limit = 20
   const from = (page - 1) * limit
@@ -43,7 +44,7 @@ export default async function AdminUsersPage({
 
   let query = db
     .from('profiles')
-    .select('id, full_name, email, kyc_status, account_type, role, created_at', { count: 'exact' })
+    .select('id, full_name, email, kyc_status, account_type, role, is_active, deleted_at, created_at', { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(from, to)
 
@@ -51,11 +52,24 @@ export default async function AdminUsersPage({
   if (accountType) query = query.eq('account_type', accountType)
   if (kycStatus) query = query.eq('kyc_status', kycStatus)
 
+  // Deleted users are hidden from the default view (soft-deleted, not gone) unless
+  // explicitly requested; suspended users still show up by default since they're
+  // still "in the system", just blocked from signing in.
+  if (statusFilter === 'deleted') {
+    query = query.not('deleted_at', 'is', null)
+  } else if (statusFilter === 'suspended') {
+    query = query.eq('is_active', false).is('deleted_at', null)
+  } else {
+    query = query.is('deleted_at', null)
+  }
+
   const { data: profiles, count } = await query
 
   const userIds = (profiles ?? []).map((p: { id: string }) => p.id)
+  // No is_active filter: admins need to see the real balance even for accounts
+  // that have been hidden from the portal (that's the whole point of the toggle).
   const { data: accounts } = userIds.length
-    ? await db.from('accounts').select('user_id, balance, currency').in('user_id', userIds).eq('is_active', true)
+    ? await db.from('accounts').select('user_id, balance, currency').in('user_id', userIds)
     : { data: [] }
   const balanceMap = new Map(
     (accounts ?? []).map((a: { user_id: string; balance: number; currency: string }) => [a.user_id, a])
@@ -90,6 +104,11 @@ export default async function AdminUsersPage({
           <option value="approved">Approved</option>
           <option value="rejected">Rejected</option>
         </select>
+        <select name="status" defaultValue={statusFilter} className="input-field text-sm w-full sm:w-40">
+          <option value="">Active + Suspended</option>
+          <option value="suspended">Suspended only</option>
+          <option value="deleted">Deleted only</option>
+        </select>
         <button type="submit" className="rounded-lg bg-accent-primary px-4 py-2 text-sm font-semibold text-text-inverse hover:bg-accent-primary-hover transition-colors">
           Filter
         </button>
@@ -99,16 +118,18 @@ export default async function AdminUsersPage({
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border-subtle bg-bg-elevated">
-              {['User', 'Tier', 'Balance', 'KYC Status', 'Role', 'Registered', ''].map((h) => (
+              {['User', 'Tier', 'Balance', 'KYC Status', 'Status', 'Role', 'Registered', ''].map((h) => (
                 <th key={h} className="px-4 py-3 text-left text-xs font-medium text-text-tertiary whitespace-nowrap">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-border-subtle">
             {(profiles ?? []).length === 0 ? (
-              <tr><td colSpan={7} className="px-4 py-12 text-center text-sm text-text-tertiary">No users found</td></tr>
+              <tr><td colSpan={8} className="px-4 py-12 text-center text-sm text-text-tertiary">No users found</td></tr>
             ) : (profiles ?? []).map((p: Record<string, unknown>) => {
               const acct = balanceMap.get(p.id as string) as { balance: number; currency: string } | undefined
+              const isDeleted = Boolean(p.deleted_at)
+              const isSuspended = !isDeleted && p.is_active === false
               return (
                 <tr key={p.id as string} className="bg-bg-surface transition-colors hover:bg-bg-elevated">
                   <td className="px-4 py-3">
@@ -126,6 +147,14 @@ export default async function AdminUsersPage({
                   <td className="px-4 py-3">
                     <span className={cn('rounded-full px-2.5 py-0.5 text-xs font-semibold', KYC_STYLES[(p.kyc_status as string) ?? ''] ?? 'bg-bg-elevated text-text-tertiary')}>
                       {((p.kyc_status as string) ?? 'unknown').replace('_', ' ')}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={cn(
+                      'rounded-full px-2.5 py-0.5 text-xs font-semibold',
+                      isDeleted ? 'bg-danger-muted text-danger' : isSuspended ? 'bg-warning/10 text-warning' : 'bg-accent-primary-muted text-accent-primary'
+                    )}>
+                      {isDeleted ? 'Deleted' : isSuspended ? 'Suspended' : 'Active'}
                     </span>
                   </td>
                   <td className="px-4 py-3">

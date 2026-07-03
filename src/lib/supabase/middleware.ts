@@ -39,6 +39,26 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (user) {
+    if (pathname.startsWith(PORTAL_PATH) || pathname.startsWith(ADMIN_PATH)) {
+      const { data: profile } = await db
+        .from('profiles')
+        .select('role, is_active, deleted_at')
+        .eq('id', user.id)
+        .single()
+      const p = profile as { role?: string; is_active?: boolean; deleted_at?: string | null } | null
+
+      // Suspended or soft-deleted users are signed out on their very next request,
+      // regardless of how long their existing session cookie has left to live.
+      if (p && (p.is_active === false || p.deleted_at)) {
+        await supabase.auth.signOut()
+        const url = request.nextUrl.clone()
+        url.pathname = '/auth/login'
+        url.search = ''
+        url.searchParams.set('error', 'account_suspended')
+        return NextResponse.redirect(url)
+      }
+    }
+
     if (AUTH_PATHS.some((p) => pathname.startsWith(p))) {
       const { data: profile } = await db.from('profiles').select('role').eq('id', user.id).single()
       const url = request.nextUrl.clone()

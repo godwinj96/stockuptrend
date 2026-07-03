@@ -1,12 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Eye, EyeOff, Loader2 } from 'lucide-react'
+import { Eye, EyeOff, Loader2, AlertTriangle } from 'lucide-react'
 import { toast } from 'sonner'
 import { createBrowserClient } from '@/lib/supabase/client'
 import { ROUTES } from '@/lib/constants/routes'
@@ -19,8 +19,15 @@ type LoginFormData = z.infer<typeof loginSchema>
 
 export function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [showPassword, setShowPassword] = useState(false)
   const supabase = createBrowserClient()
+
+  useEffect(() => {
+    if (searchParams.get('error') === 'account_suspended') {
+      toast.error('Your account has been suspended. Contact support if you believe this is a mistake.')
+    }
+  }, [searchParams])
 
   const {
     register,
@@ -58,6 +65,12 @@ export function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+      {searchParams.get('error') === 'account_suspended' && (
+        <div className="flex items-start gap-2 rounded-lg border border-danger/30 bg-danger-muted px-3.5 py-2.5 text-sm text-danger">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>Your account has been suspended. Contact support if you believe this is a mistake.</span>
+        </div>
+      )}
       <div>
         <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-text-secondary">
           Email address

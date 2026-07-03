@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { Suspense } from 'react'
 import { LoginForm } from '@/components/auth/LoginForm'
 import { ROUTES } from '@/lib/constants/routes'
 
@@ -33,7 +34,9 @@ export default function LoginPage() {
             Sign in to your StockUptrend account
           </p>
 
-          <LoginForm />
+          <Suspense fallback={null}>
+            <LoginForm />
+          </Suspense>
 
           <div className="mt-6 flex items-center gap-1 text-sm text-text-secondary">
             <span>Don&apos;t have an account?</span>

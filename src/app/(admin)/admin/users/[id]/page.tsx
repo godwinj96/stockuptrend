@@ -4,6 +4,10 @@ import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { createServerClient, createServiceRoleClient } from '@/lib/supabase/server'
 import { UserAccountCard } from '@/components/admin/users/UserAccountCard'
+import { UserStatusCard } from '@/components/admin/users/UserStatusCard'
+import { UserRoleCard } from '@/components/admin/users/UserRoleCard'
+import { DangerZoneCard } from '@/components/admin/users/DangerZoneCard'
+import { AuditLogList } from '@/components/admin/users/AuditLogList'
 import { ROUTES } from '@/lib/constants/routes'
 import { formatCurrency, formatDateTime } from '@/lib/utils/format'
 import { cn } from '@/lib/utils/cn'
@@ -33,19 +37,31 @@ export default async function AdminUserDetailPage({ params }: { params: { id: st
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const db = service as any
 
-  const [{ data: profile }, { data: accountRaw }, { data: transactions }, { data: trades }] = await Promise.all([
-    db.from('profiles').select('*').eq('id', params.id).single(),
-    db.from('accounts').select('*').eq('user_id', params.id).eq('is_active', true).single(),
-    db.from('transactions').select('*').eq('user_id', params.id).order('created_at', { ascending: false }).limit(10),
-    db.from('trades').select('profit_loss, status').eq('user_id', params.id),
-  ])
+  const [{ data: profile }, { data: accountRaw }, { data: transactions }, { data: trades }, { data: auditLogRaw }] =
+    await Promise.all([
+      db.from('profiles').select('*').eq('id', params.id).single(),
+      // No is_active filter: an admin must be able to see and manage a deactivated
+      // trading account, not just active ones (this exact filter previously caused
+      // a 406 that made a deactivated account invisible even to admins).
+      db.from('accounts').select('*').eq('user_id', params.id).maybeSingle(),
+      db.from('transactions').select('*').eq('user_id', params.id).order('created_at', { ascending: false }).limit(10),
+      db.from('trades').select('profit_loss, status').eq('user_id', params.id),
+      db
+        .from('admin_audit_log')
+        .select('*, admin:profiles!admin_audit_log_admin_id_fkey(full_name, email)')
+        .eq('target_user_id', params.id)
+        .order('created_at', { ascending: false })
+        .limit(20),
+    ])
 
   if (!profile) notFound()
 
-  const account = accountRaw as { id: string; account_number: string; account_type: string | null; balance: number | null; currency: string | null; is_active: boolean | null; total_trades: number | null } | null
+  const account = accountRaw as { id: string; account_number: string; account_type: string | null; balance: number | null; currency: string | null; is_active: boolean | null; ai_active: boolean | null; total_trades: number | null } | null
   const closedTrades = (trades ?? []).filter((t: { status: string }) => t.status === 'closed')
   const totalPnL = closedTrades.reduce((s: number, t: { profit_loss: number | null }) => s + (t.profit_loss ?? 0), 0)
   const p = profile as Record<string, unknown>
+  const isSelf = params.id === user.id
+  const isDeleted = Boolean(p.deleted_at)
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
@@ -58,7 +74,21 @@ export default async function AdminUserDetailPage({ params }: { params: { id: st
         <div className="space-y-4 lg:col-span-2">
           {/* Profile */}
           <div className="rounded-xl border border-border-subtle bg-bg-surface p-5 shadow-card">
-            <h2 className="mb-4 font-display text-sm font-semibold text-text-primary">Profile</h2>
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="font-display text-sm font-semibold text-text-primary">Profile</h2>
+              <div className="flex gap-1.5">
+                {isDeleted ? (
+                  <span className="rounded-full bg-danger-muted px-2.5 py-0.5 text-xs font-semibold text-danger">Deleted</span>
+                ) : (p.is_active as boolean) === false ? (
+                  <span className="rounded-full bg-danger-muted px-2.5 py-0.5 text-xs font-semibold text-danger">Suspended</span>
+                ) : (
+                  <span className="rounded-full bg-accent-primary-muted px-2.5 py-0.5 text-xs font-semibold text-accent-primary">Active</span>
+                )}
+                {p.role === 'admin' && (
+                  <span className="rounded-full bg-accent-gold-muted px-2.5 py-0.5 text-xs font-bold text-accent-gold">Admin</span>
+                )}
+              </div>
+            </div>
             <dl className="space-y-3">
               {[
                 { label: 'Name',      value: p.full_name as string | null },
@@ -88,8 +118,20 @@ export default async function AdminUserDetailPage({ params }: { params: { id: st
             </dl>
           </div>
 
-          {/* Account management */}
-          {account && <UserAccountCard userId={params.id} account={account} />}
+          {!isDeleted && (
+            <>
+              <UserStatusCard userId={params.id} isActive={(p.is_active as boolean) ?? true} isSelf={isSelf} />
+              <UserRoleCard userId={params.id} role={(p.role as string) ?? 'user'} isSelf={isSelf} />
+              {account && <UserAccountCard userId={params.id} account={account} />}
+            </>
+          )}
+
+          <DangerZoneCard
+            userId={params.id}
+            email={p.email as string | null}
+            deletedAt={p.deleted_at as string | null}
+            isSelf={isSelf}
+          />
 
           {/* Trade stats */}
           <div className="rounded-xl border border-border-subtle bg-bg-surface p-5 shadow-card">
@@ -112,8 +154,8 @@ export default async function AdminUserDetailPage({ params }: { params: { id: st
           </div>
         </div>
 
-        {/* Right column — transactions */}
-        <div className="lg:col-span-3">
+        {/* Right column — transactions + audit log */}
+        <div className="space-y-6 lg:col-span-3">
           <div className="rounded-xl border border-border-subtle bg-bg-surface shadow-card">
             <div className="border-b border-border-subtle px-5 py-4">
               <h2 className="font-display text-sm font-semibold text-text-primary">Recent Transactions</h2>
@@ -153,6 +195,8 @@ export default async function AdminUserDetailPage({ params }: { params: { id: st
               </table>
             </div>
           </div>
+
+          <AuditLogList entries={auditLogRaw ?? []} />
         </div>
       </div>
     </div>
