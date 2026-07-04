@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import useSWR, { mutate as globalMutate } from 'swr'
+import { toast } from 'sonner'
 import { Bell, CheckCheck, TrendingUp, ArrowDownToLine, ArrowUpFromLine, ShieldCheck, MessageSquare, Info } from 'lucide-react'
 import {
   DropdownMenu,
@@ -43,18 +44,77 @@ const NOTIFICATION_COLORS: Record<string, string> = {
   system: 'text-text-secondary bg-bg-elevated',
 }
 
+// Both mark* actions flip local state instantly via SWR's optimisticData (no
+// waiting on the network round-trip to see the unread dot/badge update), and
+// roll back automatically if the request fails.
 async function markRead(id: string) {
-  await fetch(`/api/portal/notifications/${id}`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ is_read: true }),
-  })
-  await globalMutate('/api/portal/notifications')
+  await globalMutate<NotificationsResponse>(
+    '/api/portal/notifications',
+    async (current) => {
+      const res = await fetch(`/api/portal/notifications/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_read: true }),
+      })
+      if (!res.ok) throw new Error('Failed to mark notification as read')
+      if (!current) return current
+      return {
+        notifications: current.notifications.map((n) => (n.id === id ? { ...n, is_read: true } : n)),
+        unread_count: Math.max(0, current.unread_count - 1),
+      }
+    },
+    {
+      optimisticData: (current): NotificationsResponse =>
+        current
+          ? {
+              notifications: current.notifications.map((n) => (n.id === id ? { ...n, is_read: true } : n)),
+              unread_count: Math.max(0, current.unread_count - 1),
+            }
+          : { notifications: [], unread_count: 0 },
+      rollbackOnError: true,
+      revalidate: false,
+    },
+  )
 }
 
 async function markAllRead(notifications: AppNotification[]) {
   const unread = notifications.filter((n) => !n.is_read)
-  await Promise.all(unread.map((n) => markRead(n.id)))
+  if (unread.length === 0) return
+  const unreadIds = new Set(unread.map((n) => n.id))
+
+  await globalMutate<NotificationsResponse>(
+    '/api/portal/notifications',
+    async (current) => {
+      const results = await Promise.allSettled(
+        unread.map((n) =>
+          fetch(`/api/portal/notifications/${n.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ is_read: true }),
+          }),
+        ),
+      )
+      if (results.some((r) => r.status === 'rejected')) {
+        throw new Error('Failed to mark all notifications as read')
+      }
+      if (!current) return current
+      return {
+        notifications: current.notifications.map((n) => (unreadIds.has(n.id) ? { ...n, is_read: true } : n)),
+        unread_count: 0,
+      }
+    },
+    {
+      optimisticData: (current): NotificationsResponse =>
+        current
+          ? {
+              notifications: current.notifications.map((n) => (unreadIds.has(n.id) ? { ...n, is_read: true } : n)),
+              unread_count: 0,
+            }
+          : { notifications: [], unread_count: 0 },
+      rollbackOnError: true,
+      revalidate: false,
+    },
+  )
 }
 
 export function NotificationDropdown() {
@@ -100,7 +160,7 @@ export function NotificationDropdown() {
           <span className="text-sm font-semibold text-text-primary">Notifications</span>
           {hasUnread && (
             <button
-              onClick={() => markAllRead(notifications)}
+              onClick={() => markAllRead(notifications).catch(() => toast.error('Failed to mark all as read'))}
               className="flex items-center gap-1 text-xs text-accent-primary hover:opacity-80"
             >
               <CheckCheck className="h-3.5 w-3.5" />
@@ -144,7 +204,9 @@ export function NotificationDropdown() {
                         !notification.is_read && 'bg-accent-primary/[0.04]',
                       )}
                       onClick={() => {
-                        if (!notification.is_read) markRead(notification.id)
+                        if (!notification.is_read) {
+                          markRead(notification.id).catch(() => toast.error('Failed to mark as read'))
+                        }
                       }}
                     >
                       <span className={cn('mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full', colorClass)}>

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import { revalidateTag } from 'next/cache'
 import { requireAdmin } from '@/lib/supabase/admin'
 import { logAdminAction, countOtherActiveAdmins } from '@/lib/admin/audit'
 
@@ -49,5 +50,6 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     details: { previous: target.is_active, next: active },
   })
 
+  revalidateTag('admin-dashboard')
   return NextResponse.json({ success: true, isActive: active })
 }

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import { requireAdmin } from '@/lib/supabase/admin'
 import { logAdminAction } from '@/lib/admin/audit'
 
@@ -21,5 +22,6 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
     action: 'user_restored',
   })
 
+  revalidateTag('admin-dashboard')
   return NextResponse.json({ success: true })
 }

@@ -1,32 +1,31 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { ROUTES } from '@/lib/constants/routes'
 
 interface KYCReviewActionsProps {
   userId: string
   currentStatus: string | null
 }
 
+// Resolves instantly to the Approved/Rejected panel on success instead of navigating
+// away and waiting on router.refresh() to re-fetch the admin's KYC queue.
 export function KYCReviewActions({ userId, currentStatus }: KYCReviewActionsProps) {
-  const router = useRouter()
+  const [status, setStatus] = useState(currentStatus)
   const [isPending, startTransition] = useTransition()
   const [showRejectForm, setShowRejectForm] = useState(false)
   const [reason, setReason] = useState('')
 
-  const isApproved = currentStatus === 'approved'
-  const isRejected = currentStatus === 'rejected'
+  const isApproved = status === 'approved'
+  const isRejected = status === 'rejected'
 
   function approve() {
     startTransition(async () => {
       const res = await fetch(`/api/admin/kyc/${userId}/approve`, { method: 'PATCH' })
       if (res.ok) {
+        setStatus('approved')
         toast.success('KYC approved — user notified')
-        router.push(ROUTES.admin.kyc)
-        router.refresh()
       } else {
         toast.error('Failed to approve KYC')
       }
@@ -34,7 +33,10 @@ export function KYCReviewActions({ userId, currentStatus }: KYCReviewActionsProp
   }
 
   function reject() {
-    if (!reason.trim()) { toast.error('Please provide a rejection reason'); return }
+    if (!reason.trim()) {
+      toast.error('Please provide a rejection reason')
+      return
+    }
     startTransition(async () => {
       const res = await fetch(`/api/admin/kyc/${userId}/reject`, {
         method: 'PATCH',
@@ -42,9 +44,9 @@ export function KYCReviewActions({ userId, currentStatus }: KYCReviewActionsProp
         body: JSON.stringify({ reason }),
       })
       if (res.ok) {
+        setStatus('rejected')
+        setShowRejectForm(false)
         toast.success('KYC rejected — user notified')
-        router.push(ROUTES.admin.kyc)
-        router.refresh()
       } else {
         toast.error('Failed to reject KYC')
       }
@@ -53,7 +55,7 @@ export function KYCReviewActions({ userId, currentStatus }: KYCReviewActionsProp
 
   if (isApproved) {
     return (
-      <div className="flex items-center gap-2 rounded-xl border border-accent-primary/20 bg-accent-primary-muted px-5 py-3">
+      <div className="border-accent-primary/20 flex items-center gap-2 rounded-xl border bg-accent-primary-muted px-5 py-3">
         <CheckCircle className="h-4 w-4 text-accent-primary" />
         <span className="text-sm font-semibold text-accent-primary">KYC Approved</span>
       </div>
@@ -62,7 +64,7 @@ export function KYCReviewActions({ userId, currentStatus }: KYCReviewActionsProp
 
   if (isRejected) {
     return (
-      <div className="flex items-center gap-2 rounded-xl border border-danger/20 bg-danger-muted px-5 py-3">
+      <div className="border-danger/20 flex items-center gap-2 rounded-xl border bg-danger-muted px-5 py-3">
         <XCircle className="h-4 w-4 text-danger" />
         <span className="text-sm font-semibold text-danger">KYC Rejected</span>
       </div>
@@ -76,7 +78,9 @@ export function KYCReviewActions({ userId, currentStatus }: KYCReviewActionsProp
       {showRejectForm ? (
         <div className="space-y-3">
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-text-secondary">Rejection reason</label>
+            <label className="mb-1.5 block text-xs font-medium text-text-secondary">
+              Rejection reason
+            </label>
             <textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}
@@ -89,7 +93,7 @@ export function KYCReviewActions({ userId, currentStatus }: KYCReviewActionsProp
             <button
               onClick={reject}
               disabled={isPending || !reason.trim()}
-              className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-danger py-2.5 text-sm font-semibold text-white transition-colors hover:bg-danger/80 disabled:opacity-50"
+              className="hover:bg-danger/80 flex flex-1 items-center justify-center gap-2 rounded-lg bg-danger py-2.5 text-sm font-semibold text-white transition-colors disabled:opacity-50"
             >
               {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
               Confirm Rejection
@@ -109,13 +113,17 @@ export function KYCReviewActions({ userId, currentStatus }: KYCReviewActionsProp
             disabled={isPending}
             className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-accent-primary py-3 text-sm font-semibold text-text-inverse transition-all hover:bg-accent-primary-hover hover:shadow-glow-accent disabled:opacity-50"
           >
-            {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
+            {isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <CheckCircle className="h-4 w-4" />
+            )}
             Approve KYC
           </button>
           <button
             onClick={() => setShowRejectForm(true)}
             disabled={isPending}
-            className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-danger/30 bg-danger-muted py-3 text-sm font-semibold text-danger transition-colors hover:bg-danger/20 disabled:opacity-50"
+            className="border-danger/30 hover:bg-danger/20 flex flex-1 items-center justify-center gap-2 rounded-lg border bg-danger-muted py-3 text-sm font-semibold text-danger transition-colors disabled:opacity-50"
           >
             <XCircle className="h-4 w-4" />
             Reject

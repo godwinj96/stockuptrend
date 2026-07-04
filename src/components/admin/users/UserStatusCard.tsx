@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
 import { Loader2, CheckCircle, Ban } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -13,13 +12,17 @@ interface UserStatusCardProps {
 
 // Suspending blocks login at the Supabase Auth layer (see /status route — it bans the
 // user, it doesn't just flip a display flag), so this is a real access control, not
-// cosmetic.
-export function UserStatusCard({ userId, isActive, isSelf }: UserStatusCardProps) {
-  const router = useRouter()
+// cosmetic. The switch flips instantly on click (optimistic) instead of waiting on a
+// round-trip + full page refresh; on failure it snaps back and shows why.
+export function UserStatusCard({ userId, isActive: initialActive, isSelf }: UserStatusCardProps) {
+  const [isActive, setIsActive] = useState(initialActive)
   const [isPending, startTransition] = useTransition()
   const [confirming, setConfirming] = useState(false)
 
   function apply(active: boolean) {
+    const previous = isActive
+    setIsActive(active)
+    setConfirming(false)
     startTransition(async () => {
       const res = await fetch(`/api/admin/users/${userId}/status`, {
         method: 'PATCH',
@@ -28,9 +31,8 @@ export function UserStatusCard({ userId, isActive, isSelf }: UserStatusCardProps
       })
       if (res.ok) {
         toast.success(active ? 'User reactivated' : 'User suspended')
-        setConfirming(false)
-        router.refresh()
       } else {
+        setIsActive(previous)
         const { error } = await res.json().catch(() => ({ error: null }))
         toast.error(error ?? 'Failed to update user status')
       }

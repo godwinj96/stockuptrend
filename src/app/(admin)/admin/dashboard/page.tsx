@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
+import { unstable_cache } from 'next/cache'
 import { createServerClient, createServiceRoleClient } from '@/lib/supabase/server'
 import { AdminStatsGrid } from '@/components/admin/dashboard/AdminStatsGrid'
 import { PendingQueue } from '@/components/admin/dashboard/PendingQueue'
@@ -10,63 +11,87 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 }
 
+// Read-only aggregate stats + pending-item lists — safe to cache briefly since every
+// admin mutation that changes these counts (deposit/withdrawal/KYC approve-reject,
+// user status/role/delete) calls revalidateTag('admin-dashboard'), so an admin still
+// sees their own action reflected immediately. Deliberately does NOT include the auth
+// check above (never cache authentication).
+const getDashboardData = unstable_cache(
+  async () => {
+    const service = createServiceRoleClient()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const db = service as any
+
+    const [
+      { count: totalUsers },
+      { count: pendingDepositsCount },
+      { count: pendingKycCount },
+      { count: pendingWithdrawalsCount },
+      { count: openTicketsCount },
+      { data: volumeRows },
+      { data: recentDeposits },
+      { data: kycQueue },
+      { data: ticketQueue },
+    ] = await Promise.all([
+      db.from('profiles').select('id', { count: 'exact', head: true }),
+      db.from('transactions').select('id', { count: 'exact', head: true }).eq('type', 'deposit').eq('status', 'pending_review'),
+      db.from('profiles').select('id', { count: 'exact', head: true }).in('kyc_status', ['pending', 'under_review']),
+      db.from('transactions').select('id', { count: 'exact', head: true }).eq('type', 'withdrawal').eq('status', 'pending_review'),
+      db.from('support_tickets').select('id', { count: 'exact', head: true }).in('status', ['open', 'in_progress']),
+      db.from('transactions').select('amount').eq('type', 'deposit').eq('status', 'completed'),
+      db.from('transactions').select('id, amount, currency, created_at, user_id').eq('type', 'deposit').eq('status', 'pending_review').order('created_at', { ascending: false }).limit(5),
+      db.from('profiles').select('id, full_name, email, created_at').in('kyc_status', ['pending', 'under_review']).order('created_at', { ascending: false }).limit(5),
+      db.from('support_tickets').select('id, subject, category, created_at, user_id').in('status', ['open', 'in_progress']).order('created_at', { ascending: false }).limit(5),
+    ])
+
+    const totalVolume = (volumeRows ?? []).reduce((s: number, t: { amount: number }) => s + t.amount, 0)
+
+    const depositUserIds = [...new Set((recentDeposits ?? []).map((d: { user_id: string }) => d.user_id))]
+    const ticketUserIds = [...new Set((ticketQueue ?? []).map((t: { user_id: string }) => t.user_id))]
+    const allUserIds = [...new Set([...depositUserIds, ...ticketUserIds])]
+
+    const { data: profiles } = allUserIds.length
+      ? await db.from('profiles').select('id, full_name, email').in('id', allUserIds)
+      : { data: [] }
+    const profileMap = new Map((profiles ?? []).map((p: { id: string }) => [p.id, p]))
+
+    const kycIds = (kycQueue ?? []).map((k: { id: string }) => k.id)
+    const { data: kyc_docs } = kycIds.length
+      ? await db.from('kyc_documents').select('user_id').in('user_id', kycIds)
+      : { data: [] }
+    const docCountMap = new Map<string, number>()
+    ;(kyc_docs ?? []).forEach((d: { user_id: string }) => {
+      docCountMap.set(d.user_id, (docCountMap.get(d.user_id) ?? 0) + 1)
+    })
+
+    return {
+      totalUsers: totalUsers ?? 0,
+      pendingDepositsCount: pendingDepositsCount ?? 0,
+      pendingKycCount: pendingKycCount ?? 0,
+      pendingWithdrawalsCount: pendingWithdrawalsCount ?? 0,
+      openTicketsCount: openTicketsCount ?? 0,
+      totalVolume: parseFloat(totalVolume.toFixed(2)),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      deposits: (recentDeposits ?? []).map((d: any) => ({ ...d, user: profileMap.get(d.user_id) ?? null })),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      kycSubmissions: (kycQueue ?? []).map((k: any) => ({ ...k, doc_count: docCountMap.get(k.id) ?? 0 })),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      tickets: (ticketQueue ?? []).map((t: any) => ({ ...t, user: profileMap.get(t.user_id) ?? null })),
+    }
+  },
+  ['admin-dashboard-data'],
+  { revalidate: 20, tags: ['admin-dashboard'] },
+)
+
 export default async function AdminDashboardPage() {
   const supabase = createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect(ROUTES.auth.login)
 
-  const service = createServiceRoleClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const db = service as any
-
-  const [
-    { count: totalUsers },
-    { count: pendingDepositsCount },
-    { count: pendingKycCount },
-    { count: pendingWithdrawalsCount },
-    { count: openTicketsCount },
-    { data: volumeRows },
-    { data: recentDeposits },
-    { data: kycQueue },
-    { data: ticketQueue },
-  ] = await Promise.all([
-    db.from('profiles').select('id', { count: 'exact', head: true }),
-    db.from('transactions').select('id', { count: 'exact', head: true }).eq('type', 'deposit').eq('status', 'pending_review'),
-    db.from('profiles').select('id', { count: 'exact', head: true }).in('kyc_status', ['pending', 'under_review']),
-    db.from('transactions').select('id', { count: 'exact', head: true }).eq('type', 'withdrawal').eq('status', 'pending_review'),
-    db.from('support_tickets').select('id', { count: 'exact', head: true }).in('status', ['open', 'in_progress']),
-    db.from('transactions').select('amount').eq('type', 'deposit').eq('status', 'completed'),
-    db.from('transactions').select('id, amount, currency, created_at, user_id').eq('type', 'deposit').eq('status', 'pending_review').order('created_at', { ascending: false }).limit(5),
-    db.from('profiles').select('id, full_name, email, created_at').in('kyc_status', ['pending', 'under_review']).order('created_at', { ascending: false }).limit(5),
-    db.from('support_tickets').select('id, subject, category, created_at, user_id').in('status', ['open', 'in_progress']).order('created_at', { ascending: false }).limit(5),
-  ])
-
-  const totalVolume = (volumeRows ?? []).reduce((s: number, t: { amount: number }) => s + t.amount, 0)
-
-  const depositUserIds = [...new Set((recentDeposits ?? []).map((d: { user_id: string }) => d.user_id))]
-  const ticketUserIds = [...new Set((ticketQueue ?? []).map((t: { user_id: string }) => t.user_id))]
-  const allUserIds = [...new Set([...depositUserIds, ...ticketUserIds])]
-
-  const { data: profiles } = allUserIds.length
-    ? await db.from('profiles').select('id, full_name, email').in('id', allUserIds)
-    : { data: [] }
-  const profileMap = new Map((profiles ?? []).map((p: { id: string }) => [p.id, p]))
-
-  const kycIds = (kycQueue ?? []).map((k: { id: string }) => k.id)
-  const { data: kyc_docs } = kycIds.length
-    ? await db.from('kyc_documents').select('user_id').in('user_id', kycIds)
-    : { data: [] }
-  const docCountMap = new Map<string, number>()
-  ;(kyc_docs ?? []).forEach((d: { user_id: string }) => {
-    docCountMap.set(d.user_id, (docCountMap.get(d.user_id) ?? 0) + 1)
-  })
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const deposits = (recentDeposits ?? []).map((d: any) => ({ ...d, user: profileMap.get(d.user_id) ?? null }))
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const kycSubmissions = (kycQueue ?? []).map((k: any) => ({ ...k, doc_count: docCountMap.get(k.id) ?? 0 }))
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const tickets = (ticketQueue ?? []).map((t: any) => ({ ...t, user: profileMap.get(t.user_id) ?? null }))
+  const {
+    totalUsers, pendingDepositsCount, pendingKycCount, pendingWithdrawalsCount,
+    openTicketsCount, totalVolume, deposits, kycSubmissions, tickets,
+  } = await getDashboardData()
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">

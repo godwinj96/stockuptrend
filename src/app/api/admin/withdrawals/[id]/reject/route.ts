@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import { requireAdmin } from '@/lib/supabase/admin'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { z } from 'zod'
@@ -35,5 +36,6 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     body: `Your withdrawal of $${Number(tx.amount).toFixed(2)} was rejected. Reason: ${parsed.data.reason}. The amount has been returned to your account.`,
   })
 
+  revalidateTag('admin-dashboard')
   return NextResponse.json({ success: true })
 }

@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
 import { Loader2, AlertTriangle, RotateCcw } from 'lucide-react'
 import { toast } from 'sonner'
 import { formatDateTime } from '@/lib/utils/format'
@@ -13,21 +12,30 @@ interface DangerZoneCardProps {
   isSelf: boolean
 }
 
-export function DangerZoneCard({ userId, email, deletedAt, isSelf }: DangerZoneCardProps) {
-  const router = useRouter()
+// Flips between the deleted/active panels instantly on confirm (optimistic) instead
+// of waiting on a round-trip + router.refresh(); rolls back and shows why on failure.
+export function DangerZoneCard({
+  userId,
+  email,
+  deletedAt: initialDeletedAt,
+  isSelf,
+}: DangerZoneCardProps) {
+  const [deletedAt, setDeletedAt] = useState(initialDeletedAt)
   const [isPending, startTransition] = useTransition()
   const [confirmText, setConfirmText] = useState('')
   const [showConfirm, setShowConfirm] = useState(false)
 
   function del() {
+    const previous = deletedAt
+    setDeletedAt(new Date().toISOString())
+    setShowConfirm(false)
+    setConfirmText('')
     startTransition(async () => {
       const res = await fetch(`/api/admin/users/${userId}/delete`, { method: 'POST' })
       if (res.ok) {
         toast.success('User deleted — data preserved, can be restored')
-        setShowConfirm(false)
-        setConfirmText('')
-        router.refresh()
       } else {
+        setDeletedAt(previous)
         const { error } = await res.json().catch(() => ({ error: null }))
         toast.error(error ?? 'Failed to delete user')
       }
@@ -35,12 +43,14 @@ export function DangerZoneCard({ userId, email, deletedAt, isSelf }: DangerZoneC
   }
 
   function restore() {
+    const previous = deletedAt
+    setDeletedAt(null)
     startTransition(async () => {
       const res = await fetch(`/api/admin/users/${userId}/restore`, { method: 'POST' })
       if (res.ok) {
         toast.success('User restored')
-        router.refresh()
       } else {
+        setDeletedAt(previous)
         toast.error('Failed to restore user')
       }
     })
@@ -48,21 +58,25 @@ export function DangerZoneCard({ userId, email, deletedAt, isSelf }: DangerZoneC
 
   if (deletedAt) {
     return (
-      <div className="rounded-xl border border-danger/30 bg-danger-muted p-5">
+      <div className="border-danger/30 rounded-xl border bg-danger-muted p-5">
         <div className="mb-3 flex items-center gap-2">
           <AlertTriangle className="h-4 w-4 text-danger" />
           <h2 className="font-display text-sm font-semibold text-danger">User Deleted</h2>
         </div>
         <p className="mb-4 text-xs text-text-secondary">
-          Deleted on {formatDateTime(deletedAt)}. All profile, account, transaction, and trade data is
-          preserved. The user cannot sign in until restored.
+          Deleted on {formatDateTime(deletedAt)}. All profile, account, transaction, and trade data
+          is preserved. The user cannot sign in until restored.
         </p>
         <button
           onClick={restore}
           disabled={isPending}
           className="flex items-center gap-2 rounded-lg bg-accent-primary px-4 py-2.5 text-sm font-semibold text-text-inverse transition-all hover:bg-accent-primary-hover disabled:opacity-50"
         >
-          {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5" />}
+          {isPending ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <RotateCcw className="h-3.5 w-3.5" />
+          )}
           Restore User
         </button>
       </div>
@@ -79,11 +93,11 @@ export function DangerZoneCard({ userId, email, deletedAt, isSelf }: DangerZoneC
   }
 
   return (
-    <div className="rounded-xl border border-danger/20 bg-bg-surface p-5 shadow-card">
+    <div className="border-danger/20 rounded-xl border bg-bg-surface p-5 shadow-card">
       <h2 className="mb-1 font-display text-sm font-semibold text-danger">Danger Zone</h2>
       <p className="mb-4 text-xs text-text-tertiary">
-        Deletes this user. Their profile, transactions, and trades are preserved and this can be undone
-        from the same place — but the user loses access immediately.
+        Deletes this user. Their profile, transactions, and trades are preserved and this can be
+        undone from the same place — but the user loses access immediately.
       </p>
 
       {showConfirm ? (
@@ -101,13 +115,16 @@ export function DangerZoneCard({ userId, email, deletedAt, isSelf }: DangerZoneC
             <button
               onClick={del}
               disabled={isPending || confirmText !== email}
-              className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-danger py-2.5 text-sm font-semibold text-white transition-colors hover:bg-danger/80 disabled:opacity-50"
+              className="hover:bg-danger/80 flex flex-1 items-center justify-center gap-2 rounded-lg bg-danger py-2.5 text-sm font-semibold text-white transition-colors disabled:opacity-50"
             >
               {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
               Delete User
             </button>
             <button
-              onClick={() => { setShowConfirm(false); setConfirmText('') }}
+              onClick={() => {
+                setShowConfirm(false)
+                setConfirmText('')
+              }}
               className="rounded-lg border border-border-default px-4 py-2.5 text-sm font-medium text-text-secondary transition-colors hover:bg-bg-elevated"
             >
               Cancel
@@ -117,7 +134,7 @@ export function DangerZoneCard({ userId, email, deletedAt, isSelf }: DangerZoneC
       ) : (
         <button
           onClick={() => setShowConfirm(true)}
-          className="flex items-center gap-2 rounded-lg border border-danger/30 bg-danger-muted px-4 py-2.5 text-sm font-semibold text-danger transition-colors hover:bg-danger/20"
+          className="border-danger/30 hover:bg-danger/20 flex items-center gap-2 rounded-lg border bg-danger-muted px-4 py-2.5 text-sm font-semibold text-danger transition-colors"
         >
           <AlertTriangle className="h-3.5 w-3.5" />
           Delete User

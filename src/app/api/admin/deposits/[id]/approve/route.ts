@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import { requireAdmin } from '@/lib/supabase/admin'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 
@@ -32,5 +33,6 @@ export async function PATCH(
     body: `Your deposit of $${Number(tx.amount).toFixed(2)} has been approved and credited to your account.`,
   })
 
+  revalidateTag('admin-dashboard')
   return NextResponse.json({ success: true })
 }

@@ -33,8 +33,8 @@ export function UserAccountCard({ userId, account }: UserAccountCardProps) {
   return (
     <div className="space-y-4">
       <TierSection userId={userId} account={account} onSaved={() => router.refresh()} />
-      <VisibilitySection userId={userId} account={account} onSaved={() => router.refresh()} />
-      <AITradingSection userId={userId} account={account} onSaved={() => router.refresh()} />
+      <VisibilitySection userId={userId} account={account} />
+      <AITradingSection userId={userId} account={account} />
     </div>
   )
 }
@@ -102,23 +102,25 @@ function TierSection({ userId, account, onSaved }: UserAccountCardProps & { onSa
   )
 }
 
-function VisibilitySection({ userId, account, onSaved }: UserAccountCardProps & { onSaved: () => void }) {
+function VisibilitySection({ userId, account }: UserAccountCardProps) {
+  const [isActive, setIsActive] = useState(account.is_active ?? true)
   const [isPending, startTransition] = useTransition()
   const [confirming, setConfirming] = useState(false)
-  const isActive = account.is_active ?? true
 
   function toggle() {
+    const next = !isActive
+    setIsActive(next)
+    setConfirming(false)
     startTransition(async () => {
       const res = await fetch(`/api/admin/users/${userId}/account-status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ active: !isActive }),
+        body: JSON.stringify({ active: next }),
       })
       if (res.ok) {
-        toast.success(isActive ? 'Trading account hidden' : 'Trading account visible again')
-        setConfirming(false)
-        onSaved()
+        toast.success(next ? 'Trading account visible again' : 'Trading account hidden')
       } else {
+        setIsActive(!next)
         const { error } = await res.json().catch(() => ({ error: null }))
         toast.error(error ?? 'Failed to update trading account visibility')
       }
@@ -180,21 +182,23 @@ function VisibilitySection({ userId, account, onSaved }: UserAccountCardProps & 
   )
 }
 
-function AITradingSection({ userId, account, onSaved }: UserAccountCardProps & { onSaved: () => void }) {
+function AITradingSection({ userId, account }: UserAccountCardProps) {
+  const [aiActive, setAiActive] = useState(account.ai_active ?? true)
   const [isPending, startTransition] = useTransition()
-  const aiActive = account.ai_active ?? true
 
   function toggle() {
+    const next = !aiActive
+    setAiActive(next)
     startTransition(async () => {
       const res = await fetch(`/api/admin/users/${userId}/ai-trading`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ aiActive: !aiActive }),
+        body: JSON.stringify({ aiActive: next }),
       })
       if (res.ok) {
-        toast.success(aiActive ? 'AI trading disabled' : 'AI trading enabled')
-        onSaved()
+        toast.success(next ? 'AI trading enabled' : 'AI trading disabled')
       } else {
+        setAiActive(!next)
         toast.error('Failed to update AI trading')
       }
     })

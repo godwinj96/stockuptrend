@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import { requireAdmin } from '@/lib/supabase/admin'
 import { logAdminAction, countOtherActiveAdmins } from '@/lib/admin/audit'
 
@@ -40,5 +41,6 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
     details: { email: target.email },
   })
 
+  revalidateTag('admin-dashboard')
   return NextResponse.json({ success: true })
 }

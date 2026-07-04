@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
 import { Loader2, ShieldCheck } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -11,13 +10,18 @@ interface UserRoleCardProps {
   isSelf: boolean
 }
 
-export function UserRoleCard({ userId, role, isSelf }: UserRoleCardProps) {
-  const router = useRouter()
+// Flips instantly on confirm (optimistic) instead of waiting on a round-trip + full
+// page refresh; rolls back and shows why on failure.
+export function UserRoleCard({ userId, role: initialRole, isSelf }: UserRoleCardProps) {
+  const [role, setRole] = useState(initialRole)
   const [isPending, startTransition] = useTransition()
   const [confirming, setConfirming] = useState<'promote' | 'demote' | null>(null)
   const isAdmin = role === 'admin'
 
   function apply(nextRole: 'user' | 'admin') {
+    const previous = role
+    setRole(nextRole)
+    setConfirming(null)
     startTransition(async () => {
       const res = await fetch(`/api/admin/users/${userId}/role`, {
         method: 'PATCH',
@@ -26,9 +30,8 @@ export function UserRoleCard({ userId, role, isSelf }: UserRoleCardProps) {
       })
       if (res.ok) {
         toast.success(nextRole === 'admin' ? 'User promoted to admin' : 'Admin access revoked')
-        setConfirming(null)
-        router.refresh()
       } else {
+        setRole(previous)
         const { error } = await res.json().catch(() => ({ error: null }))
         toast.error(error ?? 'Failed to update role')
       }

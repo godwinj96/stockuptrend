@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import { requireAdmin } from '@/lib/supabase/admin'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 
@@ -26,5 +27,6 @@ export async function PATCH(
     is_read: false,
   })
 
+  revalidateTag('admin-dashboard')
   return NextResponse.json({ success: true })
 }

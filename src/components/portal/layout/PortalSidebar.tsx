@@ -46,6 +46,14 @@ export function PortalSidebar({ userInfoSlot }: PortalSidebarProps) {
   const { sidebarCollapsed, toggleSidebar, mobileSidebarOpen, closeMobileSidebar } = useUIStore()
   const supabase = createBrowserClient()
 
+  // Eagerly prefetch every nav destination on mount rather than relying solely on
+  // viewport-based Link prefetch (which can be skipped on short viewports, the
+  // collapsed rail, or the mobile drawer while it's closed) — this is what makes
+  // switching sidebar tabs feel instant regardless of scroll/collapse state.
+  useEffect(() => {
+    NAV_ITEMS.forEach((item) => router.prefetch(item.href))
+  }, [router])
+
   // Close mobile drawer on route change
   useEffect(() => {
     closeMobileSidebar()
